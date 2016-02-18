@@ -1,4 +1,5 @@
-/***************************************************************************
+/*
+ /***************************************************************************
  *   Copyright (C) 2012 by                                                 *
  *    Martin Biehl <mab@physik3.gwdg.de>                                   *
  *    Guillaume de Chambrier <s0672742@sms.ed.ac.uk>                       *
@@ -34,6 +35,7 @@
 
 
 //#define VERBOSE
+#include "dungbeetle.h"
 #include <cmath>
 #include <assert.h>
 
@@ -60,10 +62,6 @@
 #include <ode_robots/mathutils.h>
 
 // include header file
-//#include "dungbeetle.h"
-
-#include "dungbeetle.h"
-
 
 // rotation and translation matrixes (to make the code shorter)
 #define ROTM osg::Matrix::rotate
@@ -71,7 +69,7 @@
 
 namespace lpzrobots {
 
-  dungbeetle::Leg::Leg() {
+  dungBeetle::Leg::Leg() {
     tcJoint = 0;
     ctrJoint = 0;
     ftiJoint = 0;
@@ -89,10 +87,10 @@ namespace lpzrobots {
 
   // constructor:
   // - give handle for ODE and OSG stuff
-  // also initialize dungbeetle.conf with the configuration in the argument of
+  // also initialize dungBeetle.conf with the configuration in the argument of
   // the constructor
-  dungbeetle::dungbeetle(const OdeHandle& odeHandle, const OsgHandle& osgHandle, const dungbeetleConf& c, const std::string& name) :
-          OdeRobot(odeHandle, osgHandle, name, "dungbeetle 0.1"), conf(c) {
+  dungBeetle::dungBeetle(const OdeHandle& odeHandle, const OsgHandle& osgHandle, const DungBeetleConf& c, const std::string& name) :
+          OdeRobot(odeHandle, osgHandle, name, "DungBeetle"), conf(c) {
     legPosUsage[L0] = LEG;
     legPosUsage[L1] = LEG;
     legPosUsage[L2] = LEG;
@@ -107,6 +105,7 @@ namespace lpzrobots {
     usSensorFrontRight = 0;
     speedsensor = 0;
 
+
     addParameter("coxaPower", &conf.coxaPower);
     addParameter("secondPower", &conf.secondPower);
     addParameter("coxaDamp", &conf.coxaDamping);
@@ -116,15 +115,28 @@ namespace lpzrobots {
     addParameter("mcoxaJointLimitB", &conf.mcoxaJointLimitB);
     addParameter("rcoxaJointLimitF", &conf.rcoxaJointLimitF);
     addParameter("rcoxaJointLimitB", &conf.rcoxaJointLimitB);
-    addParameter("secondJointLimitD", &conf.secondJointLimitD);
-    addParameter("secondJointLimitU", &conf.secondJointLimitU);
+    //addParameter("secondJointLimitD", &conf.secondJointLimitD);
+    //addParameter("secondJointLimitU", &conf.secondJointLimitU);
+    addParameter("fsecondJointLimitD", &conf.fsecondJointLimitD);
+    addParameter("fsecondJointLimitU", &conf.fsecondJointLimitU);
+    addParameter("msecondJointLimitD", &conf.msecondJointLimitD);
+    addParameter("msecondJointLimitU", &conf.msecondJointLimitU);
+    addParameter("rsecondJointLimitD", &conf.rsecondJointLimitD);
+    addParameter("rsecondJointLimitU", &conf.rsecondJointLimitU);
+
+
     addParameter("coxaMaxVel", &conf.coxaMaxVel);
 
     if (conf.useTebiaJoints) {
       addParameter("tebiaPower", &conf.tebiaPower);
       addParameter("tebiaDamp", &conf.tebiaDamping);
-      addParameter("tebiaJointLimitD", &conf.tebiaJointLimitD);
-      addParameter("tebiaJointLimitU", &conf.tebiaJointLimitU);
+      addParameter("ftebiaJointLimitD", &conf.ftebiaJointLimitD);
+	  addParameter("ftebiaJointLimitU", &conf.ftebiaJointLimitU);
+	  addParameter("mtebiaJointLimitD", &conf.mtebiaJointLimitD);
+	  addParameter("mtebiaJointLimitU", &conf.mtebiaJointLimitU);
+	  addParameter("rtebiaJointLimitD", &conf.rtebiaJointLimitD);
+	  addParameter("rtebiaJointLimitU", &conf.rtebiaJointLimitU);
+
     }
 
     // name the sensors
@@ -161,95 +173,44 @@ namespace lpzrobots {
     nameSensor(L0_irs, "*L0 IR sensor");
     nameSensor(L1_irs, "*L1 IR sensor");
     nameSensor(L2_irs, "*L2 IR sensor");
-    nameSensor(R0_us, "R0 ultrasonic sensor");
-    nameSensor(R1_us, "R1 ultrasonic sensor");
-    nameSensor(L0_us, "L0 ultrasonic sensor");
-    nameSensor(L1_us, "L1 ultrasonic sensor");
-    nameSensor(TR0_ts, "TR0 torque sensor");
-    nameSensor(TR1_ts, "TR1 torque sensor");
-    nameSensor(TR2_ts, "TR2 torque sensor");
-    nameSensor(TL0_ts, "TL0 torque sensor");
-    nameSensor(TL1_ts, "TL1 torque sensor");
-    nameSensor(TL2_ts, "TL2 torque sensor");
-    nameSensor(CR0_ts, "CR0 torque sensor");
-    nameSensor(CR1_ts, "CR1 torque sensor");
-    nameSensor(CR2_ts, "CR2 torque sensor");
-    nameSensor(CL0_ts, "CL0 torque sensor");
-    nameSensor(CL1_ts, "CL1 torque sensor");
-    nameSensor(CL2_ts, "CL2 torque sensor");
-    nameSensor(FR0_ts, "FR0 torque sensor");
-    nameSensor(FR1_ts, "FR1 torque sensor");
-    nameSensor(FR2_ts, "FR2 torque sensor");
-    nameSensor(FL0_ts, "FL0 torque sensor");
-    nameSensor(FL1_ts, "FL1 torque sensor");
-    nameSensor(FL2_ts, "FL2 torque sensor");
-    nameSensor(BJ_ts, "BJ torque sensor");
-    nameSensor(BX_acs, "body accelerometer x");
-    nameSensor(BY_acs, "body accelerometer y");
-    nameSensor(BZ_acs, "body accelerometer z");
-    nameSensor(L_ps, "photo sensor left");
-    nameSensor(M_ps, "photo sensor middle");
-    nameSensor(R_ps, "photo sensor right");
-    nameSensor(G0x_s, "*goal0 orientation x");
-    nameSensor(G0y_s, "*goal0 orientation y");
-    nameSensor(G0z_s, "*goal0 orientation z");
-    nameSensor(A_cs, "average motor current sensor");
-    nameSensor(B_cs, "average sensor and board current sensor");
-    nameSensor(BX_spd, "body speed sensor x");
-    nameSensor(BY_spd, "body speed sensor y");
-    nameSensor(BZ_spd, "body speed sensor z");
-    nameSensor(G0angleroll_s, "goal0 angle roll (x)");
-    nameSensor(G0anglepitch_s, "goal0 angle pitch (y)");
-    nameSensor(G0angleyaw_s, "*goal0 angle roll (z)");
-    nameSensor(G1x_s, "*goal1 orientation x");
-    nameSensor(G1y_s, "*goal1 orientation y");
-    nameSensor(G1z_s, "*goal1 orientation z");
-    nameSensor(G1angleroll_s, "goal1 angle roll (x)");
-    nameSensor(G1anglepitch_s, "goal1 angle pitch (y)");
-    nameSensor(G1angleyaw_s, "goal1 angle roll (z)");
-    nameSensor(G2x_s, "*goal2 orientation x");
-    nameSensor(G2y_s, "*goal2 orientation y");
-    nameSensor(G2z_s, "*goal2 orientation z");
-    nameSensor(G2angleroll_s, "goal2 angle roll (x)");
-    nameSensor(G2anglepitch_s, "goal2 angle pitch (y)");
-    nameSensor(G2angleyaw_s, "goal2 angle roll (z)");
-    nameSensor(LaserNmbEdge_s, "laser scanner number of edges");
-    nameSensor(LaserHeight_s, "laser scanner average height");
-    nameSensor(LaserRough_s, "laser scanner roughness");
-    nameSensor(LaserMaxHeight_s, "laser scanner maximum height in data");
-    nameSensor(LaserMinHeight_s, "laser scanner minimum height in data");
-    nameSensor(Poti_s, "potentiometer sensor");
-    nameSensor(Compassx_s, "compass sensor x");
-    nameSensor(Compassy_s, "compass sensor y");
-    nameSensor(R0X_acs, "R0 accelerometer x");
-    nameSensor(R0Y_acs, "R0 accelerometer y");
-    nameSensor(R0Z_acs, "R0 accelerometer z");
-    nameSensor(R1X_acs, "R1 accelerometer x");
-    nameSensor(R1Y_acs, "R1 accelerometer y");
-    nameSensor(R1Z_acs, "R1 accelerometer z");
-    nameSensor(R2X_acs, "R2 accelerometer x");
-    nameSensor(R2Y_acs, "R2 accelerometer y");
-    nameSensor(R2Z_acs, "R2 accelerometer z");
-    nameSensor(L0X_acs, "L0 accelerometer x");
-    nameSensor(L0Y_acs, "L0 accelerometer y");
-    nameSensor(L0Z_acs, "L0 accelerometer z");
-    nameSensor(L1X_acs, "L1 accelerometer x");
-    nameSensor(L1Y_acs, "L1 accelerometer y");
-    nameSensor(L1Z_acs, "L1 accelerometer z");
-    nameSensor(L2X_acs, "L2 accelerometer x");
-    nameSensor(L2Y_acs, "L2 accelerometer y");
-    nameSensor(L2Z_acs, "L2 accelerometer z");
-    nameSensor(Microphone0_s, "*microphone 0");
-    nameSensor(Microphone1_s, "*microphone 1");
-    nameSensor(Microphone2_s, "*microphone 2");
-    nameSensor(In_x, "inclinometer x");
-    nameSensor(In_y, "inclinometer y");
-    nameSensor(BX_pos, "*body position sensor x");
-    nameSensor(BY_pos, "*body position sensor y");
-    nameSensor(BZ_pos, "*body position sensor z");
-    nameSensor(BX_ori, "*body orientation sensor x");
-    nameSensor(BY_ori, "*body orientation sensor y");
-    nameSensor(BZ_ori, "*body orientation sensor z");
+
+    nameSensor(L0_s1, "*L0 Tarsus seg1 sensor");
+	nameSensor(L0_s2, "*L0 Tarsus seg2 sensor");
+	nameSensor(L0_s3, "*L0 Tarsus seg3 sensor");
+	nameSensor(L0_s4, "*L0 Tarsus seg4 sensor");
+	nameSensor(L0_s5, "*L0 Tarsus seg5 sensor");
+
+	nameSensor(R0_s1, "*R0 Tarsus seg1 sensor");
+	nameSensor(R0_s2, "*R0 Tarsus seg2 sensor");
+	nameSensor(R0_s3, "*R0 Tarsus seg3 sensor");
+	nameSensor(R0_s4, "*R0 Tarsus seg4 sensor");
+	nameSensor(R0_s5, "*R0 Tarsus seg5 sensor");
+
+	nameSensor(L1_s1, "*L1 Tarsus seg1 sensor");
+	nameSensor(L1_s2, "*L1 Tarsus seg2 sensor");
+	nameSensor(L1_s3, "*L1 Tarsus seg3 sensor");
+	nameSensor(L1_s4, "*L1 Tarsus seg4 sensor");
+	nameSensor(L1_s5, "*L1 Tarsus seg5 sensor");
+
+	nameSensor(R1_s1, "*R1 Tarsus seg1 sensor");
+	nameSensor(R1_s2, "*R1 Tarsus seg2 sensor");
+	nameSensor(R1_s3, "*R1 Tarsus seg3 sensor");
+	nameSensor(R1_s4, "*R1 Tarsus seg4 sensor");
+	nameSensor(R1_s5, "*R1 Tarsus seg5 sensor");
+
+	nameSensor(L2_s1, "*L2 Tarsus seg1 sensor");
+	nameSensor(L2_s2, "*L2 Tarsus seg2 sensor");
+	nameSensor(L2_s3, "*L2 Tarsus seg3 sensor");
+	nameSensor(L2_s4, "*L2 Tarsus seg4 sensor");
+	nameSensor(L2_s5, "*L2 Tarsus seg5 sensor");
+
+	nameSensor(R2_s1, "*R2  Tarsus seg1 sensor");
+	nameSensor(R2_s2, "*R2  Tarsus seg2 sensor");
+	nameSensor(R2_s3, "*R2  Tarsus seg3 sensor");
+	nameSensor(R2_s4, "*R2  Tarsus seg4 sensor");
+	nameSensor(R2_s5, "*R2  Tarsus seg5 sensor");
+
+
 
     // name the motors
     nameMotor(TR0_m, "TR0 motor");
@@ -279,12 +240,12 @@ namespace lpzrobots {
 
   }
 
-  dungbeetle::~dungbeetle() {
+  dungBeetle::~dungBeetle() {
     destroy();
   }
 
-  int dungbeetle::getMotorNumberIntern() {
-    return dungbeetle_MOTOR_MAX;
+  int dungBeetle::getMotorNumberIntern() {
+    return DUNGBEETLE_MOTOR_MAX;
   }
   ;
 
@@ -296,13 +257,13 @@ namespace lpzrobots {
    *        the SensorName enum)
    * @param name human readable name for the sensor
    */
-  void dungbeetle::nameSensor(const int sensorNo, const char* name) {
+  void dungBeetle::nameSensor(const int sensorNo, const char* name) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::nameSensor BEGIN\n";
+    std::cerr << "DungBeetle::nameSensor BEGIN\n";
 #endif
     addInspectableDescription("x[" + std::itos(sensorNo) + "]", name);
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::nameSensor END\n";
+    std::cerr << "DungBeetle::nameSensor END\n";
 #endif
   }
 
@@ -314,13 +275,13 @@ namespace lpzrobots {
    *        the MotorName enum)
    * @param name human readable name for the motor
    */
-  void dungbeetle::nameMotor(const int motorNo, const char* name) {
+  void dungBeetle::nameMotor(const int motorNo, const char* name) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::nameMotor BEGIN\n";
+    std::cerr << "dungBeetle::nameMotor BEGIN\n";
 #endif
     addInspectableDescription("y[" + std::itos(motorNo) + "]", name);
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::nameMotor END\n";
+    std::cerr << "dungBeetle::nameMotor END\n";
 #endif
   }
 
@@ -328,9 +289,9 @@ namespace lpzrobots {
    @param motors motors scaled to [-1,1]
    @param motornumber length of the motor array
    */
-  void dungbeetle::setMotorsIntern(const double* motors, int motornumber) {
+  void dungBeetle::setMotorsIntern(const double* motors, int motornumber) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::setMotors BEGIN\n";
+    std::cerr << "dungBeetleII::setMotors BEGIN\n";
 #endif
     assert(created);
     // robot must exist
@@ -343,19 +304,19 @@ namespace lpzrobots {
         servo->set(-motors[name]);
     }
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::setMotors END\n";
+    std::cerr << "dungBeetle::setMotors END\n";
 #endif
   }
   ;
 
-  int dungbeetle::getSensorNumberIntern() {
+  int dungBeetle::getSensorNumberIntern() {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::getSensorNumberIntern BEGIN\n";
+    std::cerr << "dungBeetle::getSensorNumberIntern BEGIN\n";
 #endif
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::getSensorNumberIntern END\n";
+    std::cerr << "dungBeetle::getSensorNumberIntern END\n";
 #endif
-    return dungbeetle_SENSOR_MAX;
+    return DUNGBEETLE_SENSOR_MAX;
   }
   ;
 
@@ -364,9 +325,9 @@ namespace lpzrobots {
    @param sensornumber length of the sensor array
    @return number of actually written sensors
    */
-  int dungbeetle::getSensorsIntern(double* sensors, int sensornumber) {
+  int dungBeetle::getSensorsIntern(double* sensors, int sensornumber) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::getSensors BEGIN\n";
+    std::cerr << "dungBeetle::getSensors BEGIN\n";
 #endif
     assert(created);
     assert(sensornumber >= getSensorNumberIntern());
@@ -393,100 +354,52 @@ namespace lpzrobots {
     sensors[FL2_as] = servos[FL2_m] ? -servos[FL2_m]->get() : 0;
     sensors[BJ_as] = servos[BJ_m] ? -servos[BJ_m]->get() : 0;
 
-    // foot contact sensors
-    if (conf.legContactSensorIsBinary) { // No scaling since binary signals are already in the range of [0,..,1]
-      sensors[R0_fs] = legContactSensors[R0] ? legContactSensors[R0]->get() : 0;
-      sensors[R1_fs] = legContactSensors[R1] ? legContactSensors[R1]->get() : 0;
-      sensors[R2_fs] = legContactSensors[R2] ? legContactSensors[R2]->get() : 0;
-      sensors[L0_fs] = legContactSensors[L0] ? legContactSensors[L0]->get() : 0;
-      sensors[L1_fs] = legContactSensors[L1] ? legContactSensors[L1]->get() : 0;
-      sensors[L2_fs] = legContactSensors[L2] ? legContactSensors[L2]->get() : 0;
-    } else { // Scaling since analog signals are used then we scale them to the range of [0,..,1]
-      // Koh! Georg: What are the different values
-      std::vector<double> max, min;
-      if (conf.beetle_version == 2) {
 
-        // Koh Corrected to have all equal max force in all legs
-         max.push_back(0.2);
-         max.push_back(0.2);
-         max.push_back(0.2);
-         max.push_back(0.2);
-         max.push_back(0.2);
-         max.push_back(0.2);
-         min.push_back(0.0);
-         min.push_back(0.0);
-         min.push_back(0.0);
-         min.push_back(0.0);
-         min.push_back(0.0);
-         min.push_back(0.0);
+    if(conf.tarsus == true)
+    {
+      sensors[L0_s1] = tarsusContactSensors[std::make_pair(L0,1)]->get();
+      sensors[L0_s2] = tarsusContactSensors[std::make_pair(L0,2)]->get();
+      sensors[L0_s3] = tarsusContactSensors[std::make_pair(L0,3)]->get();
+      sensors[L0_s4] = tarsusContactSensors[std::make_pair(L0,4)]->get();
+      sensors[L0_s5] = tarsusContactSensors[std::make_pair(L0,5)]->get();
 
-       /* max.push_back(0.16);
-        max.push_back(0.20);
-        max.push_back(0.14);
-        max.push_back(0.24);
-        max.push_back(0.20);
-        max.push_back(0.14);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);*/
-      } else {
-        //TODO: need to be recalibrated for beetle version 1
-        max.push_back(0.22); //0.30
-        max.push_back(0.22);
-        max.push_back(0.22);
-        max.push_back(0.22);
-        max.push_back(0.22);
-        max.push_back(0.22);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-        min.push_back(0.0);
-      }
-      // Georg: this normalization does not make sense to me.
-      sensors[R0_fs] =
-          legContactSensors[R0] ? ((legContactSensors[R0]->get() - min.at(0)) / (max.at(0) - min.at(0))) : 0;
-      sensors[R1_fs] =
-          legContactSensors[R1] ? ((legContactSensors[R1]->get() - min.at(1)) / (max.at(1) - min.at(1))) : 0;
-      sensors[R2_fs] =
-          legContactSensors[R2] ? ((legContactSensors[R2]->get() - min.at(2)) / (max.at(2) - min.at(2))) : 0;
-      sensors[L0_fs] =
-          legContactSensors[L0] ? ((legContactSensors[L0]->get() - min.at(3)) / (max.at(3) - min.at(3))) : 0;
-      sensors[L1_fs] =
-          legContactSensors[L1] ? ((legContactSensors[L1]->get() - min.at(4)) / (max.at(4) - min.at(4))) : 0;
-      sensors[L2_fs] =
-          legContactSensors[L2] ? ((legContactSensors[L2]->get() - min.at(5)) / (max.at(5) - min.at(5))) : 0;
-      // Koh! Georg: overwrite the rescaling
-      double footContactFactor = conf.highFootContactsensoryFeedback ? 4.0 : 1.0;
+      sensors[R0_s1] = tarsusContactSensors[std::make_pair(R0,1)]->get();
+      sensors[R0_s2] = tarsusContactSensors[std::make_pair(R0,2)]->get();
+      sensors[R0_s3] = tarsusContactSensors[std::make_pair(R0,3)]->get();
+      sensors[R0_s4] = tarsusContactSensors[std::make_pair(R0,4)]->get();
+      sensors[R0_s5] = tarsusContactSensors[std::make_pair(R0,5)]->get();
 
-      sensors[R0_fs] = legContactSensors[R0]->get()*footContactFactor;
-      sensors[R1_fs] = legContactSensors[R1]->get()*footContactFactor;
-      sensors[R2_fs] = legContactSensors[R2]->get()*footContactFactor;
-      sensors[L0_fs] = legContactSensors[L0]->get()*footContactFactor;
-      sensors[L1_fs] = legContactSensors[L1]->get()*footContactFactor;
-      sensors[L2_fs] = legContactSensors[L2]->get()*footContactFactor;
+      sensors[L1_s1] = tarsusContactSensors[std::make_pair(L1,1)]->get();
+      sensors[L1_s2] = tarsusContactSensors[std::make_pair(L1,2)]->get();
+      sensors[L1_s3] = tarsusContactSensors[std::make_pair(L1,3)]->get();
+      sensors[L1_s4] = tarsusContactSensors[std::make_pair(L1,4)]->get();
+      sensors[L1_s5] = tarsusContactSensors[std::make_pair(L1,5)]->get();
 
-      // Koh! Georg: I added this as a factor above
-      // if (conf.highFootContactsensoryFeedback)
-      // {
-      //        for (int i = R0_fs; i <= L2_fs; i++) {
-      //      	  if (sensors[i] > 4.0)
-      //      		  sensors[i] = 4.0;
-      //        }
-      // }
-      // else
-      // {
-      //        for (int i = R0_fs; i <= L2_fs; i++) {
-      //      	  if (sensors[i] > 1.0)
-      //      		  sensors[i] = 1.0;
-      //        }
-      // }
+      sensors[R1_s1] = tarsusContactSensors[std::make_pair(R1,1)]->get();
+      sensors[R1_s2] = tarsusContactSensors[std::make_pair(R1,2)]->get();
+      sensors[R1_s3] = tarsusContactSensors[std::make_pair(R1,3)]->get();
+      sensors[R1_s4] = tarsusContactSensors[std::make_pair(R1,4)]->get();
+      sensors[R1_s5] = tarsusContactSensors[std::make_pair(R1,5)]->get();
+
+      sensors[L2_s1] = tarsusContactSensors[std::make_pair(L2,1)]->get();
+      sensors[L2_s2] = tarsusContactSensors[std::make_pair(L2,2)]->get();
+      sensors[L2_s3] = tarsusContactSensors[std::make_pair(L2,3)]->get();
+      sensors[L2_s4] = tarsusContactSensors[std::make_pair(L2,4)]->get();
+      sensors[L2_s5] = tarsusContactSensors[std::make_pair(L2,5)]->get();
+
+      sensors[R2_s1] = tarsusContactSensors[std::make_pair(R2,1)]->get();
+      sensors[R2_s2] = tarsusContactSensors[std::make_pair(R2,2)]->get();
+      sensors[R2_s3] = tarsusContactSensors[std::make_pair(R2,3)]->get();
+      sensors[R2_s4] = tarsusContactSensors[std::make_pair(R2,4)]->get();
+      sensors[R2_s5] = tarsusContactSensors[std::make_pair(R2,5)]->get();
 
     }
+
+
+
+    // foot contact sensors
+
+
     // Front Ultrasonic sensors (right and left)
     sensors[FR_us] = usSensorFrontRight->getValue();
     sensors[FL_us] = usSensorFrontLeft->getValue();
@@ -499,135 +412,28 @@ namespace lpzrobots {
     sensors[L1_irs] = irLegSensors[L1] ? irLegSensors[L1]->getValue() : 0;
     sensors[L2_irs] = irLegSensors[L2] ? irLegSensors[L2]->getValue() : 0;
 
-    // Reflex ultrasonic sensors at front, middle and rear legs
-    sensors[R0_us] = 0;
-    sensors[R1_us] = 0;
-    sensors[L0_us] = 0;
-    sensors[L1_us] = 0;
 
-    // Torque sensors, used as Current sensors at each motor
-    sensors[TR0_ts] = 0;
-    sensors[TR1_ts] = 0;
-    sensors[TR2_ts] = 0;
-    sensors[TL0_ts] = 0;
-    sensors[TL1_ts] = 0;
-    sensors[TL2_ts] = 0;
-    sensors[CR0_ts] = 0;
-    sensors[CR1_ts] = 0;
-    sensors[CR2_ts] = 0;
-    sensors[CL0_ts] = 0;
-    sensors[CL1_ts] = 0;
-    sensors[CL2_ts] = 0;
-    sensors[FR0_ts] = 0;
-    sensors[FR1_ts] = 0;
-    sensors[FR2_ts] = 0;
-    sensors[FL0_ts] = 0;
-    sensors[FL1_ts] = 0;
-    sensors[FL2_ts] = 0;
-    sensors[BJ_ts] = 0;
 
-    // 3D Accelerometer (x,y,z) at body
-    sensors[BX_acs] = 0;
-    sensors[BY_acs] = 0;
 
-    // photo (light) sensors Left, Middle and Right
-    sensors[L_ps] = 0;
-    sensors[M_ps] = 0;
-    sensors[R_ps] = 0;
 
-    // goal orientation sensors (relative position to reference object)
-    sensors[G0x_s] = 0;
-    sensors[G0y_s] = 0;
-    sensors[G0z_s] = 0;
 
-    // average current sensor
-    sensors[A_cs] = 0; // average motor current
-    sensors[B_cs] = 0; // average sensor and board current
-    // Body speed sensors
+        // Body speed sensors
     sensor speedsens[3] = { 0, 0, 0 };
-    if (speedsensor)
-      speedsensor->get(speedsens, 3);
-    sensors[BX_spd] = speedsens[0];
-    sensors[BY_spd] = speedsens[1];
-    sensors[BZ_spd] = speedsens[2];
-
-
-    // Body position sensors
-    sensors[BX_pos] = position.x;
-    sensors[BY_pos] = position.y;
-    sensors[BZ_pos] = position.z;
 
 //------------------------Add GoalSensor by Ren-------------------
-    if (GoalSensor_active) {
-      //the first goal
-      std::vector<RelativePositionSensor>::iterator it = GoalSensor.begin(); //we only use one goal sensor
-      std::list<sensor> gls_val = it->getList();
-      sensors[G0z_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G0y_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G0x_s] = gls_val.back();
-      gls_val.pop_back();
 
-      //the second goal
-      it++;
-      gls_val = it->getList();
-      sensors[G1z_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G1y_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G1x_s] = gls_val.back();
-      gls_val.pop_back();
-
-      //the third goal
-      it++;
-      gls_val = it->getList();
-      sensors[G2z_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G2y_s] = gls_val.back();
-      gls_val.pop_back();
-      sensors[G2x_s] = gls_val.back();
-      gls_val.pop_back();
-    }
     //------------------------Add GoalSensor by Ren-------------------
 
-    //------------------------Add Orientation Sensor by Ren-------------------
-
-    std::list<sensor> Ori_lst =  OrientationSensor->getList();
-
-    double ori1,ori2,ori3;
-
-    ori1 = Ori_lst.front();
-    Ori_lst.pop_front();
-    ori2 = Ori_lst.front();
-    Ori_lst.pop_front();
-    ori3 = Ori_lst.front();
-    sensors[BX_ori] = ori1; //atan2(ori2,ori1)*180/M_PI;
-    sensors[BY_ori] = ori2;
-    sensors[BZ_ori] = ori3;
-
-    //Adding for Ren simulated annealing experiment
-    sensors[G0angleyaw_s] = atan2(ori2,ori1)*180/M_PI;
-
-    Ori_lst.clear();
-    //------------------------Add Orientation Sensor by Ren-------------------
-
-
-    //Added sound sensors (2) // get sensor signals and send to controller
-    sensors[Microphone0_s] = soundsensors.at(0)->getList().front();
-    sensors[Microphone1_s] = soundsensors.at(1)->getList().front();
-    sensors[Microphone2_s] = soundsensors.at(2)->getList().front();
-
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::getSensors END\n";
+    std::cerr << "dungBeetle::getSensors END\n";
 #endif
-    return dungbeetle_SENSOR_MAX;
+    return DUNGBEETLE_SENSOR_MAX;
   }
   ;
 
-  void dungbeetle::placeIntern(const osg::Matrix& pose) {
+  void dungBeetle::placeIntern(const osg::Matrix& pose) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::place BEGIN\n";
+    std::cerr << "dungBeetle::place BEGIN\n";
 #endif
     // the position of the robot is the center of the body
     // to set the vehicle on the ground when the z component of the position
@@ -637,7 +443,7 @@ namespace lpzrobots {
         * TRANSM(0, 0, conf.tebiaLength - conf.shoulderHeight + 2 * conf.tebiaRadius + conf.footRadius);
     create(p);
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::place END\n";
+    std::cerr << "dungBeetle::place END\n";
 #endif
   }
   ;
@@ -645,10 +451,10 @@ namespace lpzrobots {
   /**
    * updates the osg notes
    */
-  void dungbeetle::update() {
+  void dungBeetle::update() {
     OdeRobot::update();
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::update BEGIN\n";
+    std::cerr << "dungBeetle::update BEGIN\n";
 #endif
     assert(created);
     // robot must exist
@@ -656,18 +462,27 @@ namespace lpzrobots {
     // update the graphical representation of the sensorbank
     irSensorBank->update();
 
-    for (int i = 0; i < LEG_POS_MAX; i++) {
-      if (legContactSensors[LegPos(i)])
-        legContactSensors[LegPos(i)]->update();
-    }
+
+    for (int i = 0; i < LEG_POS_MAX; i++)
+          {
+        	 for(int j=1;j<6;j++)
+        	 {
+        		 if (tarsusContactSensors[std::make_pair(LegPos(i),j)])
+        			 tarsusContactSensors[std::make_pair(LegPos(i),j)]->update();
+        	 }
+          }
+
+
+
+
 
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::update END\n";
+    std::cerr << "dungBeetle::update END\n";
 #endif
   }
   ;
 
-  double dungbeetle::getMassOfRobot() {
+  double dungBeetle::getMassOfRobot() {
 
     double totalMass = 0.0;
 
@@ -679,15 +494,23 @@ namespace lpzrobots {
     return totalMass;
   }
 
-  void dungbeetle::sense(GlobalData& globalData) {
+  void dungBeetle::sense(GlobalData& globalData) {
     OdeRobot::sense(globalData);
     // reset ir sensors to maximum value
     irSensorBank->sense(globalData);
 
-    for (int i = 0; i < LEG_POS_MAX; i++) {
-      if (legContactSensors[LegPos(i)])
-        legContactSensors[LegPos(i)]->sense(globalData);
-    }
+
+    for (int i = 0; i < LEG_POS_MAX; i++)
+          {
+        	 for(int j=1;j<6;j++)
+        	 {
+        		 if (tarsusContactSensors[std::make_pair(LegPos(i),j)])
+        			  tarsusContactSensors[std::make_pair(LegPos(i),j)]->sense(globalData);
+        	 }
+          }
+
+
+
 
      // Added sound sensors (3) // sense from environment
     for(SoundSensor* sensor: soundsensors)
@@ -704,10 +527,10 @@ namespace lpzrobots {
    * @param global structure that contains global data from the simulation
    * environment
    */
-  void dungbeetle::doInternalStuff(GlobalData& global) {
+  void dungBeetle::doInternalStuff(GlobalData& global) {
 
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::doInternalStuff BEGIN\n";
+    std::cerr << "dungBeetle::doInternalStuff BEGIN\n";
 #endif
     OdeRobot::doInternalStuff(global);
     // update statistics
@@ -720,11 +543,11 @@ namespace lpzrobots {
     }
 
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::doInternalStuff END\n";
+    std::cerr << "dungBeetle::doInternalStuff END\n";
 #endif
   }
 
-  Primitive* dungbeetle::getMainPrimitive() const {
+  Primitive* dungBeetle::getMainPrimitive() const {
     return center;
   }
 
@@ -733,9 +556,9 @@ namespace lpzrobots {
    *
    * @param pos struct Position with desired position
    */
-  void dungbeetle::create(const osg::Matrix& pose) {
+  void dungBeetle::create(const osg::Matrix& pose) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::create BEGIN\n";
+    std::cerr << "dungBeetle::create BEGIN\n";
 #endif
     assert(!created); // cannot be recreated, use relocation via moveToPose or store and restore
 
@@ -748,6 +571,9 @@ namespace lpzrobots {
 
     // color of joint axis
     OsgHandle osgHandleJoint = osgHandle.changeColor("joint");
+
+    //color of Tarsus
+    OsgHandle osgHTarsus(osgHandle.changeColor("robot2"));
 
     // change Material substance
     OdeHandle odeHandleBody = odeHandle;
@@ -763,13 +589,13 @@ namespace lpzrobots {
     const osg::Matrix trunkPos = pose;
 
 
-
-
     if (conf.useBack) {
       front = new Box(conf.frontLength, conf.width, conf.height);
       //front->setTexture(conf.bodyTexture);
       front->init(odeHandleBody, conf.frontMass, osgHandle.changeColor("robot2"));
       osg::Matrix frontPos = TRANSM(conf.size / 2 - conf.frontLength / 2, 0, 0) * trunkPos;
+
+
       front->setPose(frontPos);
       objects.push_back(front);
 
@@ -778,6 +604,8 @@ namespace lpzrobots {
       center->setTexture(conf.bodyTexture);
       center->init(odeHandleBody, conf.trunkMass - conf.frontMass, osgHandle.changeColor("robot2"));
       osg::Matrix centerPos = TRANSM(-conf.size / 2 + (conf.size - conf.frontLength) / 2, 0, 0) * trunkPos;
+
+
       center->setPose(centerPos);
       objects.push_back(center);
       const Axis axis = Axis(0, 1, 0) * frontPos;
@@ -789,10 +617,14 @@ namespace lpzrobots {
       OneAxisServo* servo = new OneAxisServoVel(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
       servos[BJ_m] = servo;
       backboneServo = servo;
+
+
+
+
     } else {
       trunk = new Box(conf.size, conf.width, conf.height);
       trunk->setTexture(conf.bodyTexture);
-      trunk->init(odeHandleBody, conf.trunkMass, osgHandle.changeColor("robot2"));
+      trunk->init(odeHandleBody, conf.trunkMass, osgHandle.changeColor("robot3"));
       trunk->setPose(trunkPos);
       objects.push_back(trunk);
       front = trunk;
@@ -899,13 +731,19 @@ namespace lpzrobots {
 */
 
           legtrunkconnections[R2] = ROTM(conf.rLegRotAngle, 0, 0, 1) * ROTM(conf.rLegTrunkAngleH, 1, 0, 0)//001 100
-                  * ROTM(conf.rLegTrunkAngleV, 1, 1, 0) * legtrunkconnections[R2];
+                  * ROTM(conf.rLegTrunkAngleV, 1, 1, 0) *
+
+				  legtrunkconnections[R2];
+
           legtrunkconnections[L2] = ROTM(conf.rLegRotAngle, 0, 0, -1) * ROTM(conf.rLegTrunkAngleH, -1, 0, 0)
                   * ROTM(conf.rLegTrunkAngleV, 0, 1, 0) * legtrunkconnections[L2];
+
           legtrunkconnections[R1] = ROTM(conf.mLegRotAngle, 0, 0, 1) * ROTM(conf.mLegTrunkAngleH, 1, 0, 0)
                   * ROTM(conf.mLegTrunkAngleV, 0, 1, 0) * legtrunkconnections[R1];
           legtrunkconnections[L1] = ROTM(conf.mLegRotAngle, 0, 0, -1) * ROTM(conf.mLegTrunkAngleH, -1, 0, 0)
                   * ROTM(conf.mLegTrunkAngleV, 0, 1, 0) * legtrunkconnections[L1];
+
+
 
 
           legtrunkconnections[R0] = ROTM(conf.fLegRotAngle, 0, 0, 1) * ROTM(conf.fLegTrunkAngleH+100, 1, 0, 0)
@@ -927,6 +765,9 @@ namespace lpzrobots {
             * ROTM(conf.fLegTrunkAngleV, 0, 1, 0) * shouldertrunkconnections[R0];
     shouldertrunkconnections[L0] = ROTM(conf.fLegRotAngle, 0, 0, -1) * ROTM(conf.fLegTrunkAngleH, -1, 0, 0)
             * ROTM(conf.fLegTrunkAngleV-2, 0, 1, 0) * shouldertrunkconnections[L0];
+
+
+    std::vector<Primitive*> tarsusParts;
 
     // create the legs
     for (int i = 0; i < LEG_POS_MAX; i++) {
@@ -981,7 +822,25 @@ namespace lpzrobots {
         // (local) coordinate system it is)
 
 
-        const Axis axis1 = Axis(0,0,backLeg+frontL) * c1;
+        Axis axis1 = Axis(0,0,backLeg+frontL) * c1;
+
+        switch (i)
+        {
+        case 0: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1;//front left
+        break;
+        case 1: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1;//middle left
+        break;
+        case 2: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1; //rear left ok
+        break;
+        case 3: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1; //front right
+        break;
+        case 4: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1;  // middle right
+        break;
+        case 5: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1;  // rear right ok
+        break;
+        default: axis1=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis1;
+        break;
+        }
         //Qconst Axis axis1 = Axis(0, 0,  leg==L0 || -leg==R0 || tib2) * c1;
 
         // proceed along the leg (and the respective z-axis) for second
@@ -995,15 +854,54 @@ namespace lpzrobots {
         //const Axis axis2 = Axis(-leg==R2 || leg==L1||leg==L2 || leg==R0 || leg==L0,leg==L0 || -leg==L1 || -leg==R2 || leg==R0, leg==L0 || -leg==R0) * c2;
 
 
-        const Axis axis2 = Axis(backLeg+frontL,backLegInverse,backLeg) * c2;
+         Axis axis2 = Axis(backLeg+frontL,backLegInverse,backLeg) * c2;
 
+         switch (i)
+         {
+         case 0: axis2=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis2;//front left
+         break;
+         case 1:axis2=ROTM(M_PI/180,1,0,0)*ROTM(M_PI/180*-100,0,1,0)*ROTM(M_PI/180*30+M_PI/2,0,0,1)*axis2; //midle left ok
+         break;
+         case 2: axis2=ROTM(M_PI/180,1,0,0)*ROTM(M_PI/180*-80,0,1,0)*ROTM(M_PI/180*30+M_PI/2,0,0,1)*axis2; //rear left ok
+         break;
+         case 3: axis2=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis2; //front right
+         break;
+         case 4: axis2=ROTM(M_PI/180*180,1,0,0)*ROTM(-95*(M_PI/180-100)+M_PI,0,1,0)*ROTM(-(M_PI/180*30+M_PI/2),0,0,1)*axis2;  // middle right
+         break;
+         case 5: axis2=ROTM(M_PI/180,1,0,0)*ROTM((M_PI/180*-80),0,1,0)*ROTM(-(M_PI/180*30+M_PI/2),0,0,1)*axis2;  // rear right ok
+         break;
+         default: axis2=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis2;
+         break;
+         }
         //Qconst Axis axis2 = Axis(-leg==L0 || leg==R0 || leg==L2 || -leg==R2 || leg==L1 || leg==R1,leg==L0 || -leg==R0 || -leg==L2 || leg==R2 || -leg==L1 || -leg==R1,-leg==L0 || leg==R0) * c2;
 
         //and third
         osg::Matrix c3 = TRANSM(0, 0, -l2 / 2) * m2;
         osg::Matrix m3 = TRANSM(0, 0, -l3 / 2) * c3;
         const osg::Vec3 anchor3 = nullpos * c3;
-        const Axis axis3 = Axis(backLeg+frontL,backLegInverse-frontInverse,-frontL) * c3;
+        Axis axis3 = Axis(backLeg+frontL,backLegInverse-frontInverse,-frontL) * c3;
+
+        switch (i)
+        {
+        case 0: axis3=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis3;//front left
+        break;
+        case 1: axis3=ROTM(0,1,0,0)*ROTM(M_PI/180*-50,0,1,0)*ROTM(0,0,0,1)*axis3;//middle left
+        break;
+        case 2: axis3=ROTM(0,1,0,0)*ROTM(M_PI/180*-30,0,1,0)*ROTM(0,0,0,1)*axis3; //rear left ok
+        break;
+        case 3: axis3=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis3; //front right
+        break;
+        case 4: axis3=ROTM(0,1,0,0)*ROTM(M_PI/180*-50,0,1,0)*ROTM(0,0,0,1)*axis3;  // middle right
+        break;
+        case 5: axis3=ROTM(0,1,0,0)*ROTM(M_PI/180*-30,0,1,0)*ROTM(0,0,0,1)*axis3; // rear right ok
+        break;
+        default:axis3=ROTM(0,1,0,0)*ROTM(0,0,1,0)*ROTM(0,0,0,1)*axis3;
+        break;
+        }
+
+
+
+
         //Qconst Axis axis3 = Axis(leg==L1||leg==L2 || -leg==R1 || -leg==R2 || -leg==L0 || leg==R0, leg==L1||leg==L2 || leg==R1 || leg==R2 || -leg==L0 || -leg==R0,leg==-R1 || -leg==R2 || leg==L0 || -leg==R0) * c3;
 
 
@@ -1013,7 +911,7 @@ namespace lpzrobots {
         // create upper limp with radius t1 and length l1 (length refers
         // only to length of the cylinder without the semispheres at
         // both ends)
-        coxaThorax = new Capsule(t1, l1/4);
+        coxaThorax = new Capsule(t1/2, l1/4);
         coxaThorax->setTexture(conf.texture);
         coxaThorax->init(odeHandle, conf.coxaMass, osgHandle);
         //put it at m1
@@ -1037,7 +935,7 @@ namespace lpzrobots {
 
         // second limb
         Primitive* secondThorax;
-        secondThorax = new Capsule(t2, l2);
+        secondThorax = new Capsule(t2/2, l2);
         secondThorax->setTexture(conf.texture);
         secondThorax->init(odeHandle, conf.secondMass, osgHandle);
         secondThorax->setPose(m2);
@@ -1048,6 +946,7 @@ namespace lpzrobots {
         HingeJoint* k = new HingeJoint(coxaThorax, secondThorax, anchor2, -axis2);
         k->init(odeHandle, osgHandleJoint, true, t1 * 2.1);
         legs[leg].ctrJoint = k;
+
         joints.push_back(k);
         /** parameters are set later */
         OneAxisServo * servo2 = new OneAxisServoVel(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
@@ -1057,7 +956,7 @@ namespace lpzrobots {
 
         // third limb
         Primitive* tebia;
-        tebia = new Capsule(t3, l3);
+        tebia = new Capsule(t3/2, l3);
         tebia->setTexture(conf.texture);
         tebia->init(odeHandle, conf.tebiaMass, osgHandle);
         tebia->setPose(m3);
@@ -1108,7 +1007,7 @@ namespace lpzrobots {
         servos[getMotorName(leg, FTI)] = servo3;
 
         //spring foot at the end
-        if (conf.useFoot) {
+
           osg::Matrix c4 = TRANSM(0, 0, -l3 / 2 - 2 * conf.tebiaRadius - conf.footRange + conf.footRadius) * m3;
           osg::Matrix m4 = TRANSM(0, 0, -conf.footSpringPreload) * c4;
 
@@ -1116,13 +1015,14 @@ namespace lpzrobots {
           const Axis axis4 = Axis(0, 0, -1) * c4;
 
           OdeHandle my_odeHandle = odeHandle;
+
           if (conf.rubberFeet) {
             const Substance FootSubstance(3.0, 0.0, 500.0, 0.1);
             my_odeHandle.substance = FootSubstance;
           }
 
           Primitive* foot;
-          foot = new Capsule(t4, l4);
+          foot = new Capsule(t4/3, l4);
           foot->setTexture(conf.texture);
           foot->init(my_odeHandle, conf.footMass, osgHandle);
           foot->setPose(m4);
@@ -1142,37 +1042,179 @@ namespace lpzrobots {
           odeHandle.addIgnoredPair(secondThorax, foot);
 
           // Koh!
-          legContactSensors[LegPos(i)] = new ContactSensor(conf.legContactSensorIsBinary, 65/*koh changed 100*/, 1.01 * t4, false, true, Color(0,5,0));
-          legContactSensors[LegPos(i)]->setInitData(odeHandle, osgHandle, TRANSM(0, 0, -(0.5) * l4));
-          legContactSensors[LegPos(i)]->init(foot);
-          //odeHandle.addIgnoredPair(tebia, legContactSensors[LegPos(i)]->getTransformObject());
-        }
-      } else if (legPosUsage[leg] == WHEEL) {
-        //Sphere* sph = new Sphere(radius);
-        Cylinder* wheel = new Cylinder(conf.wheel_radius, conf.wheel_width);
-        wheel->setTexture(conf.texture);
-        OsgHandle bosghandle = osgHandle;
-        wheel->init(odeHandle, conf.wheel_mass, // mass
-            bosghandle.changeColor("robot2"));
-        const double pmlr = (leg == L0 || leg == L1 || leg == L2) - (leg == R0 || leg == R1 || leg == R2);
-        Pos pos = Pos(
-            // from (0,0,0) we go down x-axis, make two legs then up
-            // legdist1 and so on
-            -conf.size * 16.5 / 43.0 + (leg == L2 || leg == R2) * 0 + (leg == L1 || leg == R1) * conf.legdist1
-            + (leg == L0 || leg == R0) * (conf.legdist1 + conf.legdist2),
-            // switch left or right side of trunk for each leg
-            pmlr * conf.width,
-            // height of wheel fixation to trunk
-            -0.7 * conf.height + conf.wheel_radius);
+         //odeHandle.addIgnoredPair(tebia, legContactSensors[LegPos(i)]->getTransformObject());
 
-        wheel->setPose(ROTM(0.5 * M_PI, 1, 0, 0) * TRANSM(pos) * trunkPos);
-        objects.push_back(wheel);
-        // generate  joints to connect the wheels to the body
-        Pos anchor(dBodyGetPosition(wheel->getBody()));
-        anchor -= Pos(0, 0, 0);
-        HingeJoint * wheeljoint = new HingeJoint(objects[0], wheel, anchor, Axis(0, 1, 0) * trunkPos);
-        wheeljoint->init(odeHandle, osgHandleJoint, true, 1.1 * conf.wheel_width);
-        joints.push_back(wheeljoint);
+         if(conf.tarsus == true){
+        	 // New: tarsus
+        	 Primitive *tarsus;
+        	 double angle = M_PI/12;
+
+        	 double radius = t4/3;
+        	 double length = l4;
+        	 double mass = conf.tebiaMass/10;
+        	 tarsus = new Capsule(radius,length);
+        	 tarsus->setTexture(conf.texture);
+        	 tarsus->init(odeHandle, mass, osgHTarsus);
+
+        	 osg::Matrix m6;
+        	 osg::Matrix m5 =
+        			 ROTM(-angle,i%2==0 ? -1 : 1,0,0) *
+					 TRANSM(0,0,-length/2) *
+					 m4;
+
+        	 double angleTarsus=0;
+
+
+        	 //rotate manually tarsus here
+
+        	 switch (i)
+        	 {
+        	 case 0: angleTarsus=0;//front left
+        	 break;
+        	 case 1: angleTarsus=(M_PI/180)*300+M_PI+(M_PI/180)*20;
+        	 	 //middle left
+        	 break;
+        	 case 2: angleTarsus=0; //rear left ok
+        	 break;
+        	 case 3: angleTarsus=(M_PI/180)*20; //front right
+        	 break;
+        	 case 4: angleTarsus=(M_PI/180)*140;  // middle right
+        	 break;
+        	 case 5: angleTarsus=-(M_PI/180)*290;  // rear right ok
+         	 break;
+             default: angleTarsus=0;
+        	 break;
+        	 }
+
+        	 if(i < 2){
+        		 m6 = ROTM(i%2==0 ? angle : -angle,0,i%2==0 ? -1 : 1,0) * m5;
+        	 }else if( i > 3){
+        		 m6 = ROTM(i%2==0 ? -angle : angle,0,i%2==0 ? -1 : 1,0) * m5;
+        	 }else{
+        		 m6 = m5;
+        	 }
+        	 m6 = ROTM(0,1,0,0) *ROTM(0,0,1,0)*ROTM(angleTarsus,0,0,1)* TRANSM(0,0,-length/2) * m6 ;
+        	 //m6 =   TRANSM(0,0,-length/2) * m6 ;
+
+        	 std::cout << "leg number     " << i << std::endl;
+
+        	 tarsus->setPose(m6);
+        	 tarsusParts.push_back(tarsus);
+        	 objects.push_back(tarsus);
+
+
+
+             FixedJoint* k = new FixedJoint(foot, tarsus);
+             k->init(odeHandle, osgHTarsus, false);
+        	 joints.push_back(k);
+
+
+
+        	 Primitive *section = tarsus;
+
+        	 for(int j = 1; j < 6; j++){
+
+        		 double lengthS = length/1.9;
+        		 double radiusS = radius/1.5;
+        		 section = new Capsule(radiusS,lengthS);
+        		 section->setTexture(conf.texture);
+        		 section->init(odeHandle, mass, osgHTarsus);
+
+        		 osg::Matrix m7;
+
+        		 if(i < 2){
+        			 m7 =                  TRANSM(0,0,-lengthS/2) *
+        					 ROTM(i%2==0 ? angle : -angle,0,i%2==0 ? -1 : 1,0) *
+							 ROTM(i%2==0 ? angle : -angle,1,0,0) *
+							 TRANSM(0,0,-length/2) *
+							 m6;
+        		 }else if(i > 3){
+        			 m7 =                       TRANSM(0,0,-lengthS/2) *
+        					 ROTM(i%2==0 ? -angle : angle,0,i%2==0 ? -1 : 1,0) *
+							 ROTM(i%2==0 ? angle : -angle,1,0,0) *
+							 TRANSM(0,0,-length/2) *
+							 m6;
+
+        		 }else{
+        			 m7 =                             TRANSM(0,0,-lengthS/2) *
+        					 ROTM(i%2==0 ? angle : -angle,1,0,0) *
+							 TRANSM(0,0,-length/2) *
+							 m6;
+        		 }
+
+        		 section->setPose(m7);
+        		 objects.push_back(section);
+        		 tarsusParts.push_back(section);
+
+
+        		 if(j==1)
+        		 {
+						 HingeJoint* k = new HingeJoint(tarsusParts[j-1], tarsusParts[j], Pos(0,0,length/3) * m7,
+							 Axis(i%2==0 ? -1 : 1,0,0) * m7);
+					 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
+					 // servo used as a spring
+					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
+					 joints.push_back(k);
+					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
+					 tarsussprings.push_back(servo);
+					 addMotor(spring);
+
+        		 }
+
+        		 if(j==2)
+        		 {
+						 HingeJoint* k = new HingeJoint(tarsusParts[j-1], tarsusParts[j], Pos(0,0,length/3) * m7,
+							 Axis(i%2==0 ? -1 : 1,0,0) * m7);
+					 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
+					 // servo used as a spring
+					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
+					 joints.push_back(k);
+					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
+					 tarsussprings.push_back(servo);
+					 addMotor(spring);
+
+        		 }
+
+
+
+        		 else{
+        			 HingeJoint* k = new HingeJoint(tarsusParts[j-1], tarsusParts[j], Pos(0,0,length/3) * m7,
+        					 Axis(i%2==0 ? -1 : 1,0,0) * m7);
+        			 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
+        			 // servo used as a spring
+					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
+					 joints.push_back(k);
+					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
+					 tarsussprings.push_back(servo);
+					 addMotor(spring);
+        		 }
+
+
+
+
+
+        	//	FixedJoint* fj = new FixedJoint(tarsusParts[j-1], tarsusParts[j]);
+        	//    fj->init(odeHandle, osgHTarsus, false);
+        //		joints.push_back(fj);
+
+
+        		 m6 = m7;
+
+        		 //legContactSensors[LegPos(i)] = new ContactSensor(conf.legContactSensorIsBinary, 65/*koh changed 100*/, 1.01 * t4, false, true, Color(1,9,3));
+        		 //legContactSensors[LegPos(i)]->setInitData(odeHandle, osgHandle, TRANSM(0, 0, -(0.5) * l4));
+        		 //legContactSensors[LegPos(i)]->init(tarsusParts.at(j));
+        		 tarsusContactSensors[std::make_pair(LegPos(i),j)] = new ContactSensor(true, 65/*koh changed 100*/, 1.5 * radiusS, false, true, Color(1,9,3));
+        		 tarsusContactSensors[std::make_pair(LegPos(i),j)]->setInitData(odeHandle, osgHandle, TRANSM(0, 0, -(0.5) * lengthS));
+        		 tarsusContactSensors[std::make_pair(LegPos(i),j)]->init(tarsusParts.at(j));
+        	 }
+
+
+
+			 tarsusParts.clear();
+
+        }
+
+
       }
     }
 
@@ -1242,24 +1284,31 @@ namespace lpzrobots {
 
     created = true;
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::create END\n";
+    std::cerr << "dungBeetle::create END\n";
 #endif
   }
   ;
 
   /** destroys vehicle and space
    */
-  void dungbeetle::destroy() {
+  void dungBeetle::destroy() {
     if (created) {
 #ifdef VERBOSE
-      std::cerr << "begin dungbeetle::destroy\n";
+      std::cerr << "begin dungBeetle::destroy\n";
 #endif
+
       // delete contact sensors
-      for (int i = 0; i < LEG_POS_MAX; i++) {
-        if (legContactSensors[LegPos(i)])
-          delete legContactSensors[LegPos(i)];
+
+      for (int i = 0; i < LEG_POS_MAX; i++)
+      {
+    	 for(int j=1;j<6;j++)
+    	 {
+    		 if (tarsusContactSensors[std::make_pair(LegPos(i),j)])
+    			 delete tarsusContactSensors[std::make_pair(LegPos(i),j)];
+    	 }
       }
-      legContactSensors.clear();
+      tarsusContactSensors.clear();
+
 
       // remove all ignored pairs (brute force method)
       for (PrimitiveList::iterator i = objects.begin(); i != objects.end(); i++) {
@@ -1313,16 +1362,16 @@ namespace lpzrobots {
 
       odeHandle.deleteSpace();
 #ifdef VERBOSE
-      std::cerr << "end dungbeetle::destroy\n";
+      std::cerr << "end dungBeetle::destroy\n";
 #endif
     }
 
     created = false;
   }
 
-  bool dungbeetle::setParam(const paramkey& key, paramval val) {
+  bool dungBeetle::setParam(const paramkey& key, paramval val) {
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::setParam BEGIN\n";
+    std::cerr << "dungBeetle::setParam BEGIN\n";
 #endif
     // the parameters are assigned here
     bool rv = Configurable::setParam(key, val);
@@ -1357,7 +1406,16 @@ namespace lpzrobots {
         ctr->setDamping(conf.secondDamping);
         ctr->setMaxVel(conf.secondMaxVel);
         //yes, min is up, up is negative
-        ctr->setMinMax(conf.secondJointLimitU, conf.secondJointLimitD);
+        //ctr->setMinMax(conf.secondJointLimitU, conf.secondJointLimitD);
+        //added Giuliano
+        if (it->first == L2 || it->first == R2)
+          ctr->setMinMax(conf.rsecondJointLimitU, conf.rsecondJointLimitD);
+        if (it->first == L1 || it->first == R1)
+          ctr->setMinMax(conf.msecondJointLimitU, conf.msecondJointLimitD);
+        if (it->first == L0 || it->first == R0)
+          ctr->setMinMax(conf.fsecondJointLimitU, conf.fsecondJointLimitD);
+        //added Giuliano
+
       }
 
       OneAxisServo * fti = it->second.ftiServo;
@@ -1366,7 +1424,15 @@ namespace lpzrobots {
         fti->setDamping(conf.tebiaDamping);
         fti->setMaxVel(conf.tebiaMaxVel);
         //yes, min is up, up is negative
-        fti->setMinMax(conf.tebiaJointLimitU, conf.tebiaJointLimitD);
+        //fti->setMinMax(conf.tebiaJointLimitU, conf.tebiaJointLimitD);
+        //added Giuliano
+        if (it->first == L2 || it->first == R2)
+        	fti->setMinMax(conf.rtebiaJointLimitU, conf.rtebiaJointLimitD);
+        if (it->first == L1 || it->first == R1)
+        	fti->setMinMax(conf.mtebiaJointLimitU, conf.mtebiaJointLimitD);
+        if (it->first == L0 || it->first == R0)
+        	fti->setMinMax(conf.ftebiaJointLimitU, conf.ftebiaJointLimitD);
+        //added Giuliano
       }
     }
 
@@ -1378,22 +1444,22 @@ namespace lpzrobots {
     }
 
 #ifdef VERBOSE
-    std::cerr << "dungbeetle::setParam END\n";
+    std::cerr << "dungBeetle::setParam END\n";
 #endif
     return rv;
   }
 
   /**
    * returns the MotorName enum value for the given joint at the given
-   * leg. If the value for leg or joint are not valid dungbeetle_MOTOR_MAX
+   * leg. If the value for leg or joint are not valid dungBeetle_MOTOR_MAX
    * is returned.
    *
    * @param leg leg position
    * @param joint leg joint type
-   * @return the motor name value or dungbeetle_MOTOR_MAX if parameters are
+   * @return the motor name value or dungBeetle_MOTOR_MAX if parameters are
    *         invalid
    */
-  dungbeetle::MotorName dungbeetle::getMotorName(LegPos leg, LegJointType joint) {
+  dungBeetle::MotorName dungBeetle::getMotorName(LegPos leg, LegJointType joint) {
     if (leg == L0 && joint == TC)
       return TL0_m;
     if (leg == L0 && joint == CTR)
@@ -1430,7 +1496,7 @@ namespace lpzrobots {
       return CR2_m;
     if (leg == R2 && joint == FTI)
       return FR2_m;
-    return dungbeetle_MOTOR_MAX;
+    return DUNGBEETLE_MOTOR_MAX;
   }
 
   /**
@@ -1442,8 +1508,8 @@ namespace lpzrobots {
    * @return joint type controlled by this motor or JOINT_TYPE_MAX if
    *         MotorName is invalid
    */
-  dungbeetle::LegJointType dungbeetle::getLegJointType(MotorName name) {
-    assert(name!=dungbeetle_MOTOR_MAX);
+  dungBeetle::LegJointType dungBeetle::getLegJointType(MotorName name) {
+    assert(name!=DUNGBEETLE_MOTOR_MAX);
     switch (name) {
       case TR0_m:
       case TR1_m:
@@ -1467,7 +1533,7 @@ namespace lpzrobots {
       case FL2_m:
         return FTI;
       default:
-        std::cerr << "WARNING: point in dungbeetle::getMotorJointType reached " << "that should not" << std::endl;
+        std::cerr << "WARNING: point in dungBeetle::getMotorJointType reached " << "that should not" << std::endl;
         return LEG_JOINT_TYPE_MAX;
     }
   }
@@ -1481,8 +1547,8 @@ namespace lpzrobots {
    * @return the leg on which this motor operates or LEG_POS_MAX if
    *         MotorName is invalid
    */
-  dungbeetle::LegPos dungbeetle::getMotorLegPos(MotorName name) {
-    assert(name!=dungbeetle_MOTOR_MAX);
+  dungBeetle::LegPos dungBeetle::getMotorLegPos(MotorName name) {
+    assert(name!=DUNGBEETLE_MOTOR_MAX);
     switch (name) {
       case TR0_m:
       case CR0_m:
@@ -1509,12 +1575,12 @@ namespace lpzrobots {
       case FL2_m:
         return L2;
       default:
-        std::cerr << "WARNING: point in dungbeetle::getMotorLegPos reached " << "that should not" << std::endl;
+        std::cerr << "WARNING: point in dungBeetle::getMotorLegPos reached " << "that should not" << std::endl;
         return LEG_POS_MAX;
     }
   }
 
-  void dungbeetle::setLegPosUsage(LegPos leg, LegPosUsage usage) {
+  void dungBeetle::setLegPosUsage(LegPos leg, LegPosUsage usage) {
     legPosUsage[leg] = usage;
   }
 
@@ -1525,7 +1591,7 @@ namespace lpzrobots {
    * **/
 
 
-  Primitive* dungbeetle::getShoulderPrimitive(LegPos leg)
+  Primitive* dungBeetle::getShoulderPrimitive(LegPos leg)
   {
 	  assert(created);
 	  if(leg < LEG_POS_MAX){
@@ -1540,7 +1606,7 @@ namespace lpzrobots {
    * Date: 03.06.2014
    * Coordinated locomotion (two connected robots)
    * **/
-  Primitive* dungbeetle::getTibiaPrimitive(LegPos leg)
+  Primitive* dungBeetle::getTibiaPrimitive(LegPos leg)
   {
 	  assert(created);
 	  if(leg < LEG_POS_MAX){
@@ -1552,16 +1618,18 @@ namespace lpzrobots {
   }
 
 
-  dungbeetleConf dungbeetle::getDefaultConf(double _scale, bool _useShoulder, bool _useFoot, bool _useBack,bool _highFootContactsensoryFeedback) {
-	  return getdungbeetlev2Conf(_scale, _useShoulder, _useFoot, _useBack,_highFootContactsensoryFeedback);
+  DungBeetleConf dungBeetle::getDefaultConf(double _scale, bool _useShoulder, bool _useFoot, bool _useBack,bool _highFootContactsensoryFeedback) {
+	  return getDungBeetleConf(_scale, _useShoulder, _useFoot, _useBack,_highFootContactsensoryFeedback);
   }
 
-  dungbeetleConf dungbeetle::getdungbeetlev2Conf(double _scale, bool _useShoulder, bool _useFoot, bool _useBack, bool _highFootContactsensoryFeedback) {
 
-    dungbeetleConf c;
+  ///// this is what we use ------ Giuliano
+  DungBeetleConf dungBeetle::getDungBeetleConf(double _scale, bool _useShoulder, bool _useFoot, bool _useBack, bool _highFootContactsensoryFeedback) {
+
+    DungBeetleConf c;
 
     // "Internal" variable storing the currently used version
-    c.beetle_version = 2;
+    c.dungBeetle_version = 2;
     // use shoulder (fixed joint between legs and trunk)
     c.useShoulder = _useShoulder;
     c.useTebiaJoints = 0;
@@ -1572,11 +1640,10 @@ namespace lpzrobots {
     c.highFootContactsensoryFeedback=_highFootContactsensoryFeedback; // if highFootContactsensoryFeedback is true, then amplitude of foot sensory signal is higher
     c.rubberFeet = false;
     c.useLocalVelSensor = 0;
-    c.legContactSensorIsBinary = false;
 
     // the trunk length. this scales the whole robot! all parts' sizes,
     // masses, and forces will be adapted!!
-    c.size = 0.43 * _scale;
+    c.size = 0.43 * _scale;//0.43
     //trunk width
     c.width = 7.0 / 43.0 * c.size;
     //trunk height
@@ -1622,7 +1689,7 @@ namespace lpzrobots {
     // Manual setting adjustable joint positions at the body
     // -----------------------
 
-    // dungbeetle has a fixed but adjustable joint that decides how the legs
+    // dungBeetle has a fixed but adjustable joint that decides how the legs
     // extend from the trunk. Here you can adjust these joints
 
     // ------------- Front legs -------------
@@ -1681,25 +1748,52 @@ namespace lpzrobots {
     // -----------------------
 
     //Similar to real robot THIS ONEEEEEEEEEEEEEEEEEEEEEEEE
+
     //-45 deg; downward (+) MIN
     c.backJointLimitD = M_PI / 180 * 45.0;
     // 45 deg; upward (-) MAX
     c.backJointLimitU = -M_PI / 180 * 45.0;
 
+    //modified Giuliano
+    //TC JOINT
     // 70 deg; forward (-) MAX --> normal walking range 60 deg MAX
-    c.fcoxaJointLimitF = -M_PI / 180.0 * 50.0;
+    c.fcoxaJointLimitF = -M_PI / 180.0 * 100.0;
     //-70 deg; backward (+) MIN --> normal walking range -10 deg MIN
-    c.fcoxaJointLimitB = M_PI / 180.0 * -10.0;
+    c.fcoxaJointLimitB = M_PI / 180.0 * 90.0;
 
     //60 deg; forward (-) MAX --> normal walking range 30 deg MAX
-    c.mcoxaJointLimitF = -M_PI / 180.0 * 50.0;
+    c.mcoxaJointLimitF = -M_PI / 180.0 * 100.0;
     //60 deg; backward (+) MIN --> normal walking range -40 deg MIN
-    c.mcoxaJointLimitB = M_PI / 180 * 20.0;
+    c.mcoxaJointLimitB = M_PI / 180 * 30.0;
 
     //70 deg; forward (-) MAX --> normal walking range 60 deg MAX
-    c.rcoxaJointLimitF = -M_PI / 180.0 * 50.0;
+    c.rcoxaJointLimitF = -M_PI / 180.0 * 80.0;
     //70 deg; backward (+) MIN --> normal walking range -10 deg MIN
-    c.rcoxaJointLimitB = M_PI / 180.0 * 20.0;
+    c.rcoxaJointLimitB = M_PI / 180.0 * 50.0;
+
+    //CT JOINT front, middle, rear max min
+
+    c.fsecondJointLimitD = M_PI / 180.0 * 110.0;
+	c.fsecondJointLimitU = -M_PI / 180.0 * 0.0;
+
+	c.msecondJointLimitD = M_PI / 180.0 * 0.0;
+	c.msecondJointLimitU = -M_PI / 180.0 * 80.0;
+
+	c.rsecondJointLimitD = M_PI / 180.0 * 20.0;
+	c.rsecondJointLimitU = -M_PI / 180.0 * 100.0;
+
+    //FT JOINT front middle rear max min
+
+    c.ftebiaJointLimitD = M_PI / 180.0 *0.0;
+    c.ftebiaJointLimitU = M_PI / 180.0 *150.0;
+
+    c.mtebiaJointLimitD = M_PI / 180.0 *100.0;
+    c.mtebiaJointLimitU = M_PI / 180.0 *0.0;
+
+    c.rtebiaJointLimitD = M_PI / 180.0 *100.0;
+    c.rtebiaJointLimitU = M_PI / 180.0 *0.0;
+
+/*
 
     // 30 deg; downward (+) MIN
     c.secondJointLimitD = M_PI / 180.0 * 80.0;
@@ -1710,7 +1804,7 @@ namespace lpzrobots {
     c.tebiaJointLimitD = M_PI / 180.0 *0.0;
     // 20 deg  downward; (+) MAX
     c.tebiaJointLimitU = M_PI / 180.0 *90.0;//1
-
+*/
     // -----------------------
     // 3) Motors
     // Motor power and joint stiffness
@@ -1773,89 +1867,5 @@ namespace lpzrobots {
 
 
 
-  dungbeetleConf dungbeetle::getdungbeetlev1Conf(double _scale, bool _useShoulder, bool _useFoot, bool _useBack, bool _highFootContactsensoryFeedback) {
-	  // Take basic configuration from dungbeetlev2
-	  // and then make necessary changes
-	  dungbeetleConf c = getdungbeetlev2Conf(_scale, _useShoulder, _useFoot, _useBack, _highFootContactsensoryFeedback);
 
-    // "Internal" variable storing the currently used version
-    c.beetle_version = 1;
-    c.highFootContactsensoryFeedback=_highFootContactsensoryFeedback; //  if highFootContactsensoryFeedback is true, then amplitude of foot sensory signal is higher
-
-    //trunk height
-    c.height = /*6.5*/8.5 / 43.0 * c.size; //---------------------------------------------------dungbeetlev1
-    // -----------------------
-    // 1) Biomechanics
-    // Manual setting adjustable joint positions at the body
-    // -----------------------
-
-    // dungbeetle has a fixed but adjustable joint that decides how the legs
-    // extend from the trunk. Here you can adjust these joints
-
-    // ------------- Front legs -------------
-    // angle (in rad) around vertical axis at leg-trunk fixation 0:
-    // perpendicular
-    // => forward/backward
-    c.fLegTrunkAngleV = 0.0;
-    // angle around horizontal axis at leg-trunk fixation 0: perpendicular
-    // => upward/downward
-    c.fLegTrunkAngleH = 3.1416 / 6; //---------------------------------------------------dungbeetlev1
-    // rotation of leg around own axis 0: first joint axis is vertical
-    // => till
-    c.fLegRotAngle = 0.0;
-
-    // ------------- Middle legs ----------------
-    // => forward/backward
-    c.mLegTrunkAngleV = 0.0;
-    // => upward/downward
-    c.mLegTrunkAngleH = 3.1416 / 6; //---------------------------------------------------dungbeetlev1
-    // => till
-    c.mLegRotAngle = 0.0;
-
-    // ------------- Rear legs ------------------
-    // => forward/backward
-    c.rLegTrunkAngleV = 0.0;
-    // => upward/downward
-    c.rLegTrunkAngleH = 3.1416 / 6; //---------------------------------------------------dungbeetlev1
-    // => till
-    c.rLegRotAngle = 0.0;
-
-    // -----------------------
-    // 2) Joint Limits
-    // Setting Max, Min of each joint with respect to real
-    // -----------------------
-    //
-    //Similar to real robot
-    //-45 deg; downward (+) MIN
-    c.backJointLimitD = M_PI / 180 * 45.0; //---------------------------------------------------dungbeetlev1
-    // 45 deg; upward (-) MAX
-    c.backJointLimitU = -M_PI / 180 * 45.0;
-
-    // 45 deg; forward (-) MAX --> normal walking range 25 deg MAX
-    c.fcoxaJointLimitF = -M_PI / 180.0 * 45.0;
-    //-45 deg; backward (+) MIN --> normal walking range -30 deg MIN
-    c.fcoxaJointLimitB = M_PI / 180.0 * 45.0;
-
-    //45 deg; forward (-) MAX --> normal walking range 25 deg MAX
-    c.mcoxaJointLimitF = -M_PI / 180.0 * 45.0;
-    //45 deg; backward (+) MIN --> normal walking range -30 deg MIN
-    c.mcoxaJointLimitB = M_PI / 180 * 45.0;
-
-    //45 deg; forward (-) MAX --> normal walking range 25 deg MAX
-    c.rcoxaJointLimitF = -M_PI / 180.0 * 45.0;
-    //45 deg; backward (+) MIN --> normal walking range -30 deg MIN
-    c.rcoxaJointLimitB = M_PI / 180.0 * 45.0;
-
-    // 30 deg; downward (+) MIN --> normal walking range 65 deg MIN
-    c.secondJointLimitD = M_PI / 180.0 * 30.0;
-    // 100 deg upward (-) MAX --> normal walking range 115 deg MAX
-    c.secondJointLimitU = -M_PI / 180.0 * 100.0;
-
-    //140 deg downward; (+) MIN --> normal walking range 140 deg MIN
-    c.tebiaJointLimitD = M_PI / 180.0 * -100.0;
-    //15 deg  downward; (+) MAX --> normal walking range 120 deg MAX
-    c.tebiaJointLimitU = M_PI / 180.0 * 15.0;
-
-    return c;
-  }
 }
