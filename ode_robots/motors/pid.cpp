@@ -33,7 +33,7 @@ namespace lpzrobots {
   PID::PID ( double KP , double KI , double KD)
     : KP(KP), KI(KI), KD(KD)
   {
-    P=D=I=0;
+    P=D=integrator=I=0;
 
     targetposition = 0;
     derivative     = 0;
@@ -71,21 +71,40 @@ namespace lpzrobots {
       position = newsensorval;
       double stepsize=time-lasttime;
 
+		error = targetposition - position;
+		derivative = (error - lasterror) / stepsize;
+		integrator += stepsize * error;
+
+		if( integrator > 10 )
+		{
+			integrator = 10;
+		}
+		else if( integrator < -10 )
+		{
+			integrator = -10;
+		}
+
+		force = (error*KP) + (derivative*KD) + (integrator*KI);
+
+/*
       lasterror = error;
       error = targetposition - position;
       derivative = (lasterror - error) / stepsize;
 
       P = error;
-      //      I += (1/tau) * (error * KI - I); // I+=error * KI
+      //      integrator += (1/tau) * (error * KI - integrator); // integrator+=error * KI
       I += stepsize * error * KI;
-      I = min(0.5,max(-0.5,I)); // limit I to 0.5
+      integrator = min(0.5,max(-0.5,integrator)); // limit integrator to 0.5
       D = -derivative * KD;
       D = min(0.9,max(-0.9,D)); // limit D to 0.9
       force = KP*(P + I + D);
+*/
     } else {
       force=0;
     }
     lasttime=time;
+    lasterror = error;
+    //force = -0.25;
     return force;
   }
 
@@ -102,7 +121,7 @@ namespace lpzrobots {
       derivative += ((lasterror - error) / stepsize - derivative)*0.2; // Georg: Who put the 0.2 here!?
 
       P = error;
-      I*= (1-1/tau);
+      I *= (1-1/tau);
       I += stepsize * error * KI;
       D = -derivative * KD;
       force = KP*(P + I + D);
