@@ -129,6 +129,11 @@ namespace lpzrobots {
     };
 
     /** returns the integration term of the PID controller of the servo*/
+    virtual void setIntegration(double integration) {
+      pid.KI = integration;
+    };
+
+    /** returns the integration term of the PID controller of the servo*/
     virtual double& offsetCanceling() {
       return pid.KI;
     };
