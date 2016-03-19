@@ -52,12 +52,13 @@ namespace lpzrobots {
     pid.setTargetPosition(pos);
 
     double force = pid.step(joint->getPosition1(), joint->odeHandle.getTime());
-    force = std::min(pid.KP, std::max(-pid.KP,force));// limit force to 1*KP
+    //force = std::min(pid.KP, std::max(-pid.KP,force));// limit force to 1*KP
+    //force = clip(force,-10*pid.KP, 10*pid.KP); // limit force to 10*KP
     joint->addForce1(force);
-    if(maxVel>0){
+    /*if(maxVel>0){
       joint->getPart1()->limitLinearVel(maxVel);
       joint->getPart2()->limitLinearVel(maxVel);
-    }
+    }*/
   }
 
   OneAxisServoCentered::OneAxisServoCentered(OneAxisJoint* joint, double _min, double _max,

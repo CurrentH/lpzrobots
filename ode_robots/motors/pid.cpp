@@ -76,23 +76,23 @@ namespace lpzrobots {
 		derivative = (error - lasterror) / stepsize;
 		integrator += stepsize * error;
 
-		/*if( integrator > 10 )
+		if( integrator > 10 )
 		{
 			integrator = 10;
 		}
 		else if( integrator < -10 )
 		{
 			integrator = -10;
-		}*/
+		}
 
 		force = (error*KP) + (derivative*KD) + (integrator*KI);
 
-		int limits = 10;
+		/*int limits = 10;
 
 	    if( force > limits )
 	    	force = limits;
 	    else if( force < -limits )
-	    	force = -limits;
+	    	force = -limits;*/
 
     } else
     {
@@ -101,7 +101,9 @@ namespace lpzrobots {
 
     lasttime=time;
     lasterror = error;
-
+    //cout << "Kp " << KP << endl;
+    //cout << "Ki " << KI << endl;
+    //cout << "Kd " << KD << endl;
     return force;
   }
 
