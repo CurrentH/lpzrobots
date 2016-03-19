@@ -67,44 +67,41 @@ namespace lpzrobots {
   double PID::step ( double newsensorval, double time)
   {
     if(lasttime != -1 && time - lasttime > 0 ){
-      lastposition = position;
-      position = newsensorval;
-      double stepsize=time-lasttime;
+
+    	lastposition = position;
+    	position = newsensorval;
+    	double stepsize=time-lasttime;
 
 		error = targetposition - position;
 		derivative = (error - lasterror) / stepsize;
 		integrator += stepsize * error;
 
-		if( integrator > 10 )
+		/*if( integrator > 10 )
 		{
 			integrator = 10;
 		}
 		else if( integrator < -10 )
 		{
 			integrator = -10;
-		}
+		}*/
 
 		force = (error*KP) + (derivative*KD) + (integrator*KI);
 
-/*
-      lasterror = error;
-      error = targetposition - position;
-      derivative = (lasterror - error) / stepsize;
+		int limits = 10;
 
-      P = error;
-      //      integrator += (1/tau) * (error * KI - integrator); // integrator+=error * KI
-      I += stepsize * error * KI;
-      integrator = min(0.5,max(-0.5,integrator)); // limit integrator to 0.5
-      D = -derivative * KD;
-      D = min(0.9,max(-0.9,D)); // limit D to 0.9
-      force = KP*(P + I + D);
-*/
-    } else {
-      force=0;
+	    if( force > limits )
+	    	force = limits;
+	    else if( force < -limits )
+	    	force = -limits;
+
+    } else
+    {
+    	force=0;
     }
+
     lasttime=time;
     lasterror = error;
-    //force = -0.25;
+
     return force;
   }
 
