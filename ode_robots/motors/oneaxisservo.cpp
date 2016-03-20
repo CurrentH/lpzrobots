@@ -107,7 +107,7 @@ namespace lpzrobots {
 
     // A function that scales the input to fit the maxPower
 	velocity *= maxPower;
-	//std::cout << "a vel" << velocity << std::endl;
+
 	// TODO: Consider a function that lowers the power when nearing minimum and maximum
 
     // Pass the velocity directly
