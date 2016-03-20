@@ -137,7 +137,8 @@ namespace lpzrobots {
   {
     // force is here a nominal velocity
 
-    if(lasttime != -1 && time - lasttime > 0 ){
+    if(lasttime != -1 && time - lasttime > 0 )
+    {
       lastposition = position;
       position = newsensorval;
       double stepsize=time-lasttime;
@@ -153,13 +154,18 @@ namespace lpzrobots {
       } else
         force = KP*P;
       // limit the velocity
-      if(stepsize*fabs(force) > fabs(error)){
+      if(stepsize*fabs(force) > fabs(error))
+      {
         force = error/stepsize;
       }
-    } else {
+    } else
+    {
       force=0;
     }
+
+
     lasttime=time;
+
     return force;
   }
 

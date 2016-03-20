@@ -241,12 +241,11 @@ namespace lpzrobots {
 
     /** adjusts maximal speed of servo*/
     virtual void setMaxVel(double maxVel) override {
-      this->maxVel = maxVel;
-      pid.KP=maxVel/2;
+      maxPower = maxVel;
     };
     /** adjusts maximal speed of servo*/
     virtual double getMaxVel() override {
-      return maxVel;
+      return maxPower;
     };
 
     /** sets the set point of the servo.
@@ -265,6 +264,7 @@ namespace lpzrobots {
     double dummy;
     double power;
     double damp;
+    double maxPower;
   };
 
 
