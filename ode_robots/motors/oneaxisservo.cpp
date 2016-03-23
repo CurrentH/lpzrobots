@@ -150,5 +150,58 @@ namespace lpzrobots {
     }
   }
 
+	OneAxisServoVelPos::OneAxisServoVelPos(const OdeHandle& odeHandle,
+								OneAxisJoint* joint, double _min, double _max,
+								double power_pos, double damp_pos, double integration_pos,
+								double power_vel, double damp_vel, double integration_vel,
+								double _maxPower, double jointLimit, bool minmaxCheck)
+	: OneAxisServo(joint, _min, _max, 0, 0, 0, 0, jointLimit, minmaxCheck),
+		motor(odeHandle, joint, power_vel	),
+		pid( power_pos, integration_pos, damp_pos, power_vel, integration_vel, damp_vel ),
+		maxPower(_maxPower)
+	{
+		motor.init(0,0);
+		motor.setPower(pid.KPvel);
+	}
+
+	OneAxisServoVelPos::~OneAxisServoVelPos(){}
+
+	void OneAxisServoVelPos::set(double velocity){
+		velocity = clip(velocity, -1.0, 1.0);
+
+		// A function that scales the input to fit the maxPower
+		velocity *= maxPower;
+
+		// Pass the velocity directly
+		motor.set(0, velocity);
+	}
+
+	void OneAxisServoVelPos::set(double position, bool flag){
+		position = clip(position, -1.0, 1.0);
+		position = (position+1)*(max-min)/2 + min;
+
+		pid.setTargetPosition(position);
+		double velocity = pid.stepPositionVelocity( joint->getPosition1(), motor.get(0), joint->odeHandle.getTime() );
+
+		set( velocity );
+
+
+
+		/*
+		pid.setTargetPosition(position);
+		double force = pid.stepNoCutoff(joint->getPosition1(), joint->odeHandle.getTime());
+		force = clip(force,-10*pid.KP, 10*pid.KP);
+		joint->addForce1(force);
+		if(maxVel>0)
+		{
+			joint->getPart1()->limitLinearVel(maxVel);
+			joint->getPart2()->limitLinearVel(maxVel);
+		}
+		*/
+	}
+
+
+
+
 }
 

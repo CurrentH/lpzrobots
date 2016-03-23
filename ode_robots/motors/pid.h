@@ -52,14 +52,50 @@ namespace lpzrobots {
     double I;
 
     double force;
+
+    //	Parameters used for the double loop PID.
+    double KPpos;
+	double KIpos;
+	double KDpos;
+	double KPvel;
+	double KIvel;
+	double KDvel;
+
+	double pos;
+	double lastpos;
+	double last2pos;
+
+	double vel;
+	double lastvel;
+	double last2vel;
+
+	double error_pos;
+	double lasterror_pos;
+	double targetposition_pos;
+
+	double error_vel;
+	double lasterror_vel;
+	double targetposition_vel;
+
+    double derivative_inner;
+    double integrator_inner;
+    double derivative_outer;
+    double integrator_outer;
+
     double lasttime;  // last update time (to calc stepsize)
 
     //*********************methods******************
   public :
     /// KP is used as a general koefficient. KI and KD can be tuned without dependence of KP
+/*
     PID ( double KP = 100 , double KI = 2.0 , double KD = 0.3 );
+*/
+    PID ( double KPpos = 100 , double KIpos = 2.0 , double KDpos = 0.3,
+    		double KPvel = 100 , double KIvel = 2.0 , double KDvel = 0.3 );
 
     void setKP(double KP);
+    void setKI(double KI);
+    void setKD(double KD);
 
     void setTargetPosition ( double newpos );
 
@@ -76,6 +112,10 @@ namespace lpzrobots {
         in one timestep.
      */
     double stepVelocity ( double newsensorval, double time);
+    /**
+     *	Double PID loop. Set a position, and use the velocity motor.
+     */
+    double stepPositionVelocity ( double newsensorval, double motorvel, double time);
 
   };
 
