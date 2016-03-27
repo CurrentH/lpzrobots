@@ -29,47 +29,32 @@
 using namespace std;
 
 namespace lpzrobots {
-/*
-  PID::PID ( double KP , double KI , double KD)
-    : KP(KP), KI(KI), KD(KD)
-  {
-    P=D=integrator=I=0;
-
-    targetposition = 0;
-    derivative     = 0;
-    position       = 0;
-    lastposition   = 0;
-    error          = 0;
-    tau            = 1000;
-    lasttime       = -1;
-    last2position  = 0;
-    lasterror      = 0;
-    force          = 0;
-  }
-*/
-  PID::PID ( double KPpos, double KIpos, double KDpos, double KPvel, double KIvel, double KDvel )
-      : KPpos(KPpos), KIpos(KIpos), KDpos(KDpos), KPvel(KPvel), KIvel(KIvel), KDvel(KDvel)
+  PID::PID ( double KP, double KI, double KD, double KPvel, double KIvel, double KDvel )
+      : KP(KP), KI(KI), KD(KD), KPvel(KPvel), KIvel(KIvel), KDvel(KDvel)
     {
-	  targetposition_pos = 0;
-	  targetposition_vel = 0;
-      derivative_inner = 0;
-      derivative_outer = 0;
-      integrator_inner = 0;
-      integrator_outer = 0;
-      vel = 0;
-      pos = 0;
-      lastvel = 0;
-      lastpos = 0;
-      last2vel = 0;
-      last2pos = 0;
-      error_pos = 0;
-      error_vel = 0;
-      lasterror_pos = 0;
-      lasterror_vel = 0;
+		P=D=I=0;
 
-      tau            = 1000;
-      lasttime       = -1;
-      force          = 0;
+		targetposition = 0;
+		integrator = 0;
+		derivative = 0;
+		position = 0;
+		lastposition = 0;
+		last2position = 0;
+		error = 0;
+		lasterror = 0;
+
+		targetvelocity = 0;
+		integrator_vel = 0;
+		derivative_vel = 0;
+		velocity = 0;
+		lastvelocity = 0;
+		last2velocity = 0;
+		error_vel = 0;
+		lasterror_vel = 0;
+
+		tau            = 1000;
+		lasttime       = -1;
+		force          = 0;
     }
 
   void PID::setKP(double KP){
@@ -132,9 +117,6 @@ namespace lpzrobots {
 
     lasttime=time;
     lasterror = error;
-    //cout << "Kp " << KP << endl;
-    //cout << "Ki " << KI << endl;
-    //cout << "Kd " << KD << endl;
     return force;
   }
 
@@ -206,42 +188,44 @@ namespace lpzrobots {
 	if( lasttime != -1 && time - lasttime > 0 )
 	{
 		//	The outer loop.
-		lastpos = pos;
-		pos = newsensorval;
+		lastposition = position;
+		position = newsensorval;
 
-		error_pos = targetposition_pos - pos;
-		derivative_outer = (error_pos - lasterror_pos) / stepsize;
-		integrator_outer += stepsize * error_pos;
+		error = targetposition - position;
+		derivative = (error - lasterror) / stepsize;
+		integrator += stepsize * error;
 
-		if( integrator_outer > 10 )
+		if( integrator > 50 )
 		{
-			integrator_outer = 10;
+			integrator = 50;
 		}
-		else if( integrator_outer < -10 )
+		else if( integrator < -50 )
 		{
-			integrator_outer = -10;
+			integrator = -50;
 		}
 
-		double targetvelocity = (error_pos*KPpos) + (derivative_outer*KDpos) + (integrator_outer*KIpos);
+		//double targetvelocity = (error_pos*KPpos) + (derivative_outer*KDpos) + (integrator_outer*KIpos);
+		double targetvelocity = (error*1000.0) + (derivative*1.0) + (integrator*1.5);
 
 		//	The inner loop
-		lastvel = vel;
-		vel = motorvel;
+		lastvelocity = velocity;
+		velocity = motorvel;
 
-		error_vel = targetvelocity - vel;
-		derivative_inner = (error_vel - lasterror_vel) / stepsize;
-		integrator_inner += stepsize * error_vel;
+		error_vel = targetvelocity - velocity;
+		derivative_vel = (error_vel - lasterror_vel) / stepsize;
+		integrator_vel += stepsize * error_vel;
 
-		if( integrator_inner > 10 )
+		if( integrator_vel > 10 )
 		{
-			integrator_inner = 10;
+			integrator_vel = 10;
 		}
-		else if( integrator_inner < -10 )
+		else if( integrator_vel < -10 )
 		{
-			integrator_inner = -10;
+			integrator_vel = -10;
 		}
 
-		force = (error_vel*KPvel) + (derivative_inner*KDvel) + (integrator_inner*KIvel);
+		//force = (error_vel*KPvel) + (derivative_vel*KDvel) + (integrator_vel*KIvel);
+		force = (error_vel*50.0) + (derivative_vel*0.5) + (integrator_vel*10.0);
 	}
 	else
 	{
@@ -249,7 +233,7 @@ namespace lpzrobots {
 	}
 
 	lasttime = time;
-	lasterror_pos = error_pos;
+	lasterror = error;
 	lasterror_vel = error_vel;
 
 	return force;

@@ -178,10 +178,8 @@ namespace lpzrobots {
 		else
 		{
 			velocity = clip(velocity, -1.0, 1.0);
-
 			// A function that scales the input to fit the maxPower
 			velocity *= maxPower;
-
 			// Pass the velocity directly
 			motor.set(0, velocity);
 		}
@@ -189,14 +187,14 @@ namespace lpzrobots {
 
 	void OneAxisServoVelPos::set(double position, bool flag)
 	{
-		position = position - 10; 					// CANCELS THE OFFSET
+		position = position + 10; 					// CANCELS THE OFFSET
 		position = clip(position, -1.0, 1.0);
 		position = (position+1)*(max-min)/2 + min;
 
 		pid.setTargetPosition(position);
 		double velocity = pid.stepPositionVelocity( joint->getPosition1(), motor.get(0), joint->odeHandle.getTime() );
+		velocity = clip(velocity, -1.0, 1.0);		// Ensures no offset
 
-		//velocity = clip(velocity, -1.0, 1.0);		// Ensures no offset
 		set( velocity );
 	}
 

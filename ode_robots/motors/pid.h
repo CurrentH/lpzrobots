@@ -31,66 +31,43 @@ namespace lpzrobots {
     //*********************attributes***************
     //private:
   public:
-
-    double position;
-    double lastposition;
-    double last2position;
-
-    double error;
-    double lasterror;
-    double derivative;
-    double integrator;
-    double targetposition;
-
-    double KP;
-    double KI;
-    double KD;
-    double tau;
-
     double P;
     double D;
     double I;
 
-    double force;
-
-    //	Parameters used for the double loop PID.
-    double KPpos;
-	double KIpos;
-	double KDpos;
+    double KP;
+	double KI;
+	double KD;
 	double KPvel;
 	double KIvel;
 	double KDvel;
 
-	double pos;
-	double lastpos;
-	double last2pos;
+	double targetposition;
+	double integrator;
+	double derivative;
+	double position;
+	double lastposition;
+	double last2position;
+	double error;
+	double lasterror;
 
-	double vel;
-	double lastvel;
-	double last2vel;
-
-	double error_pos;
-	double lasterror_pos;
-	double targetposition_pos;
-
+	double targetvelocity;
+	double integrator_vel;
+	double derivative_vel;
+	double velocity;
+	double lastvelocity;
+	double last2velocity;
 	double error_vel;
 	double lasterror_vel;
-	double targetposition_vel;
 
-    double derivative_inner;
-    double integrator_inner;
-    double derivative_outer;
-    double integrator_outer;
-
+    double tau;
     double lasttime;  // last update time (to calc stepsize)
+    double force;
 
     //*********************methods******************
   public :
     /// KP is used as a general koefficient. KI and KD can be tuned without dependence of KP
-/*
-    PID ( double KP = 100 , double KI = 2.0 , double KD = 0.3 );
-*/
-    PID ( double KPpos = 100 , double KIpos = 2.0 , double KDpos = 0.3,
+    PID ( double KP = 100 , double KI = 2.0 , double KD = 0.3,
     		double KPvel = 100 , double KIvel = 2.0 , double KDvel = 0.3 );
 
     void setKP(double KP);
