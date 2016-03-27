@@ -194,65 +194,65 @@ namespace lpzrobots {
       force=0;
     }
 
-
     lasttime=time;
 
     return force;
   }
   double PID::stepPositionVelocity ( double newsensorval, double motorvel, double time)
   {
-		//	The force is here a nominal velocity
-		if( lasttime != -1 && time - lasttime > 0 )
+	double stepsize = time - lasttime;
+
+	//	The force is here a nominal velocity
+	if( lasttime != -1 && time - lasttime > 0 )
+	{
+		//	The outer loop.
+		lastpos = pos;
+		pos = newsensorval;
+
+		error_pos = targetposition_pos - pos;
+		derivative_outer = (error_pos - lasterror_pos) / stepsize;
+		integrator_outer += stepsize * error_pos;
+
+		if( integrator_outer > 10 )
 		{
-			//	The outer loop.
-			lastpos = pos;
-			pos = newsensorval;
-			double stepsize = time - lasttime;
-
-			error_pos = targetposition_pos - pos;
-			derivative_outer = (error_pos - lasterror_pos) / stepsize;
-			integrator_outer += stepsize * error_pos;
-
-			if( integrator_outer > 10 )
-			{
-				integrator_outer = 10;
-			}
-			else if( integrator_outer < -10 )
-			{
-				integrator_outer = -10;
-			}
-
-			double targetvelocity = (error_pos*KPpos) + (derivative_outer*KDpos) + (integrator_outer*KIpos);
-
-			//	The inner loop
-			lastvel = vel;
-			vel = motorvel;
-			error_vel = targetvelocity - vel;
-
-			derivative_inner = (error_vel - lasterror_vel) / stepsize;
-			integrator_inner += stepsize * error_vel;
-
-			if( integrator_inner > 10 )
-			{
-				integrator_inner = 10;
-			}
-			else if( integrator_inner < -10 )
-			{
-				integrator_inner = -10;
-			}
-
-			force = (error_vel*KPvel) + (derivative_inner*KDvel) + (integrator_inner*KIvel);
+			integrator_outer = 10;
 		}
-		else
+		else if( integrator_outer < -10 )
 		{
-			force = 0;
+			integrator_outer = -10;
 		}
 
-		lasttime = time;
-		lasterror_pos = error_pos;
-		lasterror_vel = error_vel;
-		return force;
+		double targetvelocity = (error_pos*KPpos) + (derivative_outer*KDpos) + (integrator_outer*KIpos);
+
+		//	The inner loop
+		lastvel = vel;
+		vel = motorvel;
+
+		error_vel = targetvelocity - vel;
+		derivative_inner = (error_vel - lasterror_vel) / stepsize;
+		integrator_inner += stepsize * error_vel;
+
+		if( integrator_inner > 10 )
+		{
+			integrator_inner = 10;
+		}
+		else if( integrator_inner < -10 )
+		{
+			integrator_inner = -10;
+		}
+
+		force = (error_vel*KPvel) + (derivative_inner*KDvel) + (integrator_inner*KIvel);
+	}
+	else
+	{
+		force = 0;
+	}
+
+	lasttime = time;
+	lasterror_pos = error_pos;
+	lasterror_vel = error_vel;
+
+	return force;
   }
-
 
 }

@@ -146,6 +146,9 @@ namespace lpzrobots {
     virtual double getMaxVel() {
       return maxVel;
     };
+    /**	Used in the Position and Velocity servo */
+    virtual void setOuterLoopParameters(double, double, double){
+    }
 
 
   protected:
@@ -374,30 +377,35 @@ namespace lpzrobots {
 			}
 
 			/** adjusts the power of the servo*/
-			virtual void setPower(double power) {
-			  pid.KP = pid.KPpos = power;
+			virtual void setPower(double power){
+			  pid.KP = pid.KPvel = power;
 			};
 			virtual double getPower() override{
 			  return pid.KP;
 			};
 			virtual void setDamping(double damp) override{
-			  pid.KD = pid.KDpos = damp;
+			  pid.KD = pid.KDvel = damp;
 			};
 			virtual double getDamping() override{
 			  return pid.KD;
 			}
 			virtual void setIntegration(double integration) override{
-			  pid.KI = pid.KIpos = integration;
+			  pid.KI = pid.KIvel = integration;
 			};
 			virtual double& offsetCanceling() override{
 			  return pid.KI;
 			};
-			virtual void setMaxVel(double maxVel) override {
+			virtual void setMaxVel(double maxVel) override{
 				maxPower = maxVel;
 			};
 			virtual double getMaxVel() override{
 				return maxPower;
 			};
+			virtual void setOuterLoopParameters(double power, double integration, double damp) override{
+				pid.KPpos = power;
+				pid.KDpos = damp;
+				pid.KIpos = integration;
+			}
 
 			virtual void set(double vel) override ;		//Use to control motor with velocity
 			virtual void set(double pos, bool flag);	//Use to control motor with position
@@ -409,7 +417,6 @@ namespace lpzrobots {
 			protected:
 				AngularMotor1Axis motor;
 				PID pid;
-
 				double maxPower;
 	};
 

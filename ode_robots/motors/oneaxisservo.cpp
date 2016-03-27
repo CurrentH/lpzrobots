@@ -169,25 +169,26 @@ namespace lpzrobots {
 
 	OneAxisServoVelPos::~OneAxisServoVelPos(){}
 
-	void OneAxisServoVelPos::set(double velocity){
-		if(abs(velocity) >= 9 && abs(velocity) <= 11){
+	void OneAxisServoVelPos::set(double velocity)
+	{
+		if( abs(velocity) >= 9 && abs(velocity) <= 11 )
+		{
 			set(velocity, true);
-		} else {
-		cout << "VELOCITY!" << endl;
-		velocity = clip(velocity, -1.0, 1.0);
+		}
+		else
+		{
+			velocity = clip(velocity, -1.0, 1.0);
 
-		// A function that scales the input to fit the maxPower
-		velocity *= maxPower;
+			// A function that scales the input to fit the maxPower
+			velocity *= maxPower;
 
-		// Pass the velocity directly
-		motor.set(0, velocity);
+			// Pass the velocity directly
+			motor.set(0, velocity);
 		}
 	}
 
-	void OneAxisServoVelPos::set(double position, bool flag){
-
-		cout << "POSITION!" << endl;
-
+	void OneAxisServoVelPos::set(double position, bool flag)
+	{
 		position = position - 10; 					// CANCELS THE OFFSET
 		position = clip(position, -1.0, 1.0);
 		position = (position+1)*(max-min)/2 + min;
@@ -195,26 +196,9 @@ namespace lpzrobots {
 		pid.setTargetPosition(position);
 		double velocity = pid.stepPositionVelocity( joint->getPosition1(), motor.get(0), joint->odeHandle.getTime() );
 
-		velocity = clip(velocity, -1.0, 1.0);		// Ensures no offset
+		//velocity = clip(velocity, -1.0, 1.0);		// Ensures no offset
 		set( velocity );
-
-
-
-		/*
-		pid.setTargetPosition(position);
-		double force = pid.stepNoCutoff(joint->getPosition1(), joint->odeHandle.getTime());
-		force = clip(force,-10*pid.KP, 10*pid.KP);
-		joint->addForce1(force);
-		if(maxVel>0)
-		{
-			joint->getPart1()->limitLinearVel(maxVel);
-			joint->getPart2()->limitLinearVel(maxVel);
-		}
-		*/
 	}
-
-
-
 
 }
 
