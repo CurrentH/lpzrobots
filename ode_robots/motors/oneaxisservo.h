@@ -352,7 +352,6 @@ namespace lpzrobots {
 			OneAxisServoVelPos(const OdeHandle& odeHandle,
 									OneAxisJoint* joint, double _min, double _max,
 									double power_pos=10, double damp_pos=0.05, double integration_pos=2,
-									double power_vel=10, double damp_vel=0.05, double integration_vel=2,
 									double maxVel=20, double jointLimit=1.3, bool minmaxCheck=true );
 
 			virtual ~OneAxisServoVelPos();

@@ -29,8 +29,8 @@
 using namespace std;
 
 namespace lpzrobots {
-  PID::PID ( double KP, double KI, double KD, double KPvel, double KIvel, double KDvel )
-      : KP(KP), KI(KI), KD(KD), KPvel(KPvel), KIvel(KIvel), KDvel(KDvel)
+  PID::PID ( double KP, double KI, double KD )
+      : KP(KP), KI(KI), KD(KD)
     {
 		P=D=I=0;
 
@@ -42,15 +42,6 @@ namespace lpzrobots {
 		last2position = 0;
 		error = 0;
 		lasterror = 0;
-
-		targetvelocity = 0;
-		integrator_vel = 0;
-		derivative_vel = 0;
-		velocity = 0;
-		lastvelocity = 0;
-		last2velocity = 0;
-		error_vel = 0;
-		lasterror_vel = 0;
 
 		tau            = 1000;
 		lasttime       = -1;
@@ -180,63 +171,44 @@ namespace lpzrobots {
 
     return force;
   }
-  double PID::stepPositionVelocity ( double newsensorval, double motorvel, double time)
+  double PID::stepPositionVelocity ( double newsensorval, double time)
   {
-	double stepsize = time - lasttime;
-
-	//	The force is here a nominal velocity
-	if( lasttime != -1 && time - lasttime > 0 )
-	{
-		//	The outer loop.
+	  if(lasttime != -1 && time - lasttime > 0 )
+	  {
 		lastposition = position;
 		position = newsensorval;
+		double stepsize=time-lasttime;
 
 		error = targetposition - position;
 		derivative = (error - lasterror) / stepsize;
 		integrator += stepsize * error;
 
-		if( integrator > 50 )
+		if( integrator > 1000 )
 		{
-			integrator = 50;
+			integrator = 1000;
 		}
-		else if( integrator < -50 )
+		else if( integrator < -1000 )
 		{
-			integrator = -50;
-		}
-
-		//double targetvelocity = (error_pos*KPpos) + (derivative_outer*KDpos) + (integrator_outer*KIpos);
-		double targetvelocity = (error*1000.0) + (derivative*1.0) + (integrator*1.5);
-
-		//	The inner loop
-		lastvelocity = velocity;
-		velocity = motorvel;
-
-		error_vel = targetvelocity - velocity;
-		derivative_vel = (error_vel - lasterror_vel) / stepsize;
-		integrator_vel += stepsize * error_vel;
-
-		if( integrator_vel > 10 )
-		{
-			integrator_vel = 10;
-		}
-		else if( integrator_vel < -10 )
-		{
-			integrator_vel = -10;
+			integrator = -1000;
 		}
 
-		//force = (error_vel*KPvel) + (derivative_vel*KDvel) + (integrator_vel*KIvel);
-		force = (error_vel*50.0) + (derivative_vel*0.5) + (integrator_vel*10.0);
-	}
-	else
-	{
-		force = 0;
-	}
+		force = (error*KP) + (derivative*KD) + (integrator*KI);
 
-	lasttime = time;
-	lasterror = error;
-	lasterror_vel = error_vel;
+		int limits = 5500;
 
-	return force;
+	    if( force > limits )
+	    	force = limits;
+	    else if( force < -limits )
+	    	force = -limits;
+
+	  } else
+	  {
+		force=0;
+	  }
+
+	  lasttime=time;
+	  lasterror = error;
+	  return force;
   }
 
 }
