@@ -153,7 +153,7 @@ namespace lpzrobots {
     }
   }
 
-	OneAxisServoVelPos::OneAxisServoVelPos(const OdeHandle& odeHandle,
+	OneAxisServoPosForce::OneAxisServoPosForce(const OdeHandle& odeHandle,
 								OneAxisJoint* joint, double _min, double _max,
 								double power_pos, double damp_pos, double integration_pos,
 								double _maxPower, double jointLimit, bool minmaxCheck)
@@ -166,38 +166,17 @@ namespace lpzrobots {
 		motor.setPower(10000); // This should just be high! (but should we make a var for this?)
 	}
 
-	OneAxisServoVelPos::~OneAxisServoVelPos(){}
+	OneAxisServoPosForce::~OneAxisServoPosForce(){}
 
-	void OneAxisServoVelPos::set(double velocity)
+	void OneAxisServoPosForce::set(double position)
 	{
-		if( abs(velocity) >= 9 && abs(velocity) <= 11 )
-		{
-			set(velocity, true);
-		}
-		else
-		{
-			joint->addForce1(0); // Make sure no force is applied
-
-			velocity = clip(velocity, -1.0, 1.0);
-			// A function that scales the input to fit the maxPower
-			velocity *= maxPower;
-			// Pass the velocity directly
-			motor.set(0, velocity);
-		}
-	}
-
-	void OneAxisServoVelPos::set(double position, bool flag)
-	{
-		motor.set(0, 0); // Make sure no velocity is applied
-
-		position = position + 10; 					// CANCELS THE OFFSET
 		position = clip(position, -1.0, 1.0);
 		position = (position+1)*(max-min)/2 + min;
 
 		pid.setTargetPosition(position);
-		double velocity = pid.stepPositionVelocity( joint->getPosition1(), joint->odeHandle.getTime() );
+		double force = pid.stepPositionVelocity( joint->getPosition1(), joint->odeHandle.getTime() );
 
-		joint->addForce1(velocity);
+		joint->addForce1(force);
 	}
 
 }

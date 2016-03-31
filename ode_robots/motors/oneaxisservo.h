@@ -338,7 +338,7 @@ namespace lpzrobots {
     double damp;
   };
 
-	class OneAxisServoVelPos : public OneAxisServo
+	class OneAxisServoPosForce : public OneAxisServo
 	{
 		public:
 			/** min and max values are understood as travel bounds.
@@ -349,12 +349,12 @@ namespace lpzrobots {
 			0: the servo has no power at the set point (maximal body feeling);
 			1: is servo has full power at the set point: maximal stiffness, perfectly damped.
 			*/
-			OneAxisServoVelPos(const OdeHandle& odeHandle,
+			OneAxisServoPosForce(const OdeHandle& odeHandle,
 									OneAxisJoint* joint, double _min, double _max,
 									double power_pos=10, double damp_pos=0.05, double integration_pos=2,
 									double maxVel=20, double jointLimit=1.3, bool minmaxCheck=true );
 
-			virtual ~OneAxisServoVelPos();
+			virtual ~OneAxisServoPosForce();
 
 			virtual void init(Primitive* own, Joint* joint = 0) override
 			{
@@ -398,8 +398,7 @@ namespace lpzrobots {
 				return maxPower;
 			};
 
-			virtual void set(double vel) override ;		//Use to control motor with velocity
-			virtual void set(double pos, bool flag);	//Use to control motor with position
+			virtual void set(double pos) override ;
 			virtual double get() const override
 			{
 				double pos =  joint->getPosition1();
