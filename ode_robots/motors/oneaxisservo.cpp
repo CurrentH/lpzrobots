@@ -176,7 +176,7 @@ namespace lpzrobots {
 		pid.setTargetPosition( position );
 		double force = pid.stepPositionForce( joint->getPosition1(), joint->odeHandle.getTime() );
 
-		std::cout << force << std::endl;
+		//std::cout << force << std::endl;
 
 		joint->addForce1( force );
 	}
