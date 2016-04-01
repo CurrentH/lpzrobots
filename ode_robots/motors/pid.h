@@ -79,7 +79,7 @@ namespace lpzrobots {
     /**
      *	Double PID loop. Set a position, and use the velocity motor.
      */
-    double stepPositionVelocity ( double newsensorval, double time);
+    double stepPositionForce ( double newsensorval, double time);
 
   };
 

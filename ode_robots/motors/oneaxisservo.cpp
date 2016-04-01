@@ -168,15 +168,17 @@ namespace lpzrobots {
 
 	OneAxisServoPosForce::~OneAxisServoPosForce(){}
 
-	void OneAxisServoPosForce::set(double position)
+	void OneAxisServoPosForce::set( double position )
 	{
-		position = clip(position, -1.0, 1.0);
-		position = (position+1)*(max-min)/2 + min;
+		position = clip( position, -1.0, 1.0 );
+		position = ( position + 1 )*(max-min)/2 + min;
 
-		pid.setTargetPosition(position);
-		double force = pid.stepPositionVelocity( joint->getPosition1(), joint->odeHandle.getTime() );
+		pid.setTargetPosition( position );
+		double force = pid.stepPositionForce( joint->getPosition1(), joint->odeHandle.getTime() );
 
-		joint->addForce1(force);
+		std::cout << force << std::endl;
+
+		joint->addForce1( force );
 	}
 
 }
