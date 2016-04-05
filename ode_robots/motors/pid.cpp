@@ -29,27 +29,34 @@
 using namespace std;
 
 namespace lpzrobots {
+  PID::PID ( double KP, double KI, double KD )
+      : KP(KP), KI(KI), KD(KD)
+    {
+		P=D=I=0;
 
-  PID::PID ( double KP , double KI , double KD)
-    : KP(KP), KI(KI), KD(KD)
-  {
-    P=D=I=0;
+		targetposition = 0;
+		integrator = 0;
+		derivative = 0;
+		position = 0;
+		lastposition = 0;
+		last2position = 0;
+		error = 0;
+		lasterror = 0;
 
-    targetposition = 0;
-    derivative     = 0;
-    position       = 0;
-    lastposition   = 0;
-    error          = 0;
-    tau            = 1000;
-    lasttime       = -1;
-    last2position  = 0;
-    lasterror      = 0;
-    force          = 0;
-  }
+		tau            = 1000;
+		lasttime       = -1;
+		force          = 0;
+    }
 
   void PID::setKP(double KP){
-    this->KP = KP;
-  }
+	  this->KP = KP;
+	}
+  void PID::setKI(double KI){
+      this->KI = KI;
+    }
+  void PID::setKD(double KD){
+	  this->KD = KD;
+	}
 
   void PID::setTargetPosition ( double newpos )
   {
@@ -67,25 +74,40 @@ namespace lpzrobots {
   double PID::step ( double newsensorval, double time)
   {
     if(lasttime != -1 && time - lasttime > 0 ){
-      lastposition = position;
-      position = newsensorval;
-      double stepsize=time-lasttime;
 
-      lasterror = error;
-      error = targetposition - position;
-      derivative = (lasterror - error) / stepsize;
+    	lastposition = position;
+    	position = newsensorval;
+    	double stepsize=time-lasttime;
 
-      P = error;
-      //      I += (1/tau) * (error * KI - I); // I+=error * KI
-      I += stepsize * error * KI;
-      I = min(0.5,max(-0.5,I)); // limit I to 0.5
-      D = -derivative * KD;
-      D = min(0.9,max(-0.9,D)); // limit D to 0.9
-      force = KP*(P + I + D);
-    } else {
-      force=0;
+		error = targetposition - position;
+		derivative = (error - lasterror) / stepsize;
+		integrator += stepsize * error;
+
+		if( integrator > 10 )
+		{
+			integrator = 10;
+		}
+		else if( integrator < -10 )
+		{
+			integrator = -10;
+		}
+
+		force = (error*KP) + (derivative*KD) + (integrator*KI);
+
+		/*int limits = 10;
+
+	    if( force > limits )
+	    	force = limits;
+	    else if( force < -limits )
+	    	force = -limits;*/
+
+    } else
+    {
+    	force=0;
     }
+
     lasttime=time;
+    lasterror = error;
     return force;
   }
 
@@ -102,7 +124,7 @@ namespace lpzrobots {
       derivative += ((lasterror - error) / stepsize - derivative)*0.2; // Georg: Who put the 0.2 here!?
 
       P = error;
-      I*= (1-1/tau);
+      I *= (1-1/tau);
       I += stepsize * error * KI;
       D = -derivative * KD;
       force = KP*(P + I + D);
@@ -119,7 +141,8 @@ namespace lpzrobots {
   {
     // force is here a nominal velocity
 
-    if(lasttime != -1 && time - lasttime > 0 ){
+    if(lasttime != -1 && time - lasttime > 0 )
+    {
       lastposition = position;
       position = newsensorval;
       double stepsize=time-lasttime;
@@ -135,15 +158,59 @@ namespace lpzrobots {
       } else
         force = KP*P;
       // limit the velocity
-      if(stepsize*fabs(force) > fabs(error)){
+      if(stepsize*fabs(force) > fabs(error))
+      {
         force = error/stepsize;
       }
-    } else {
+    } else
+    {
       force=0;
     }
+
     lasttime=time;
+
     return force;
   }
+  double PID::stepPositionForce ( double newsensorval, double time)
+  {
+	  if(lasttime != -1 && time - lasttime > 0 )
+	  {
+		lastposition = position;
+		position = newsensorval;
+		double stepsize=time-lasttime;
 
+		error = targetposition - position;
+		derivative = (error - lasterror) / stepsize;
+		integrator += stepsize * error;
+
+		int limits = 2000;
+
+		if( integrator > limits )
+		{
+			integrator = limits;
+		}
+		else if( integrator < -limits )
+		{
+			integrator = -limits;
+		}
+
+		force = (error*KP) + (derivative*KD) + (integrator*KI);
+
+		limits = 2000;
+
+	    if( force > limits )
+	    	force = limits;
+	    else if( force < -limits )
+	    	force = -limits;
+
+	  } else
+	  {
+		force=0;
+	  }
+
+	  lasttime=time;
+	  lasterror = error;
+	  return force;
+  }
 
 }

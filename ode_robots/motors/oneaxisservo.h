@@ -129,6 +129,11 @@ namespace lpzrobots {
     };
 
     /** returns the integration term of the PID controller of the servo*/
+    virtual void setIntegration(double integration) {
+      pid.KI = integration;
+    };
+
+    /** returns the integration term of the PID controller of the servo*/
     virtual double& offsetCanceling() {
       return pid.KI;
     };
@@ -236,12 +241,11 @@ namespace lpzrobots {
 
     /** adjusts maximal speed of servo*/
     virtual void setMaxVel(double maxVel) override {
-      this->maxVel = maxVel;
-      pid.KP=maxVel/2;
+      maxPower = maxVel;
     };
     /** adjusts maximal speed of servo*/
     virtual double getMaxVel() override {
-      return maxVel;
+      return maxPower;
     };
 
     /** sets the set point of the servo.
@@ -260,6 +264,7 @@ namespace lpzrobots {
     double dummy;
     double power;
     double damp;
+    double maxPower;
   };
 
 
@@ -332,6 +337,78 @@ namespace lpzrobots {
     double power;
     double damp;
   };
+
+	class OneAxisServoPosForce : public OneAxisServo
+	{
+		public:
+			/** min and max values are understood as travel bounds.
+			The zero position is (max-min)/2
+			@param maxVel is understood as a speed parameter of the servo.
+			to the set point (current control error).
+			This regulates the stiffness and the body feeling
+			0: the servo has no power at the set point (maximal body feeling);
+			1: is servo has full power at the set point: maximal stiffness, perfectly damped.
+			*/
+			OneAxisServoPosForce(const OdeHandle& odeHandle,
+									OneAxisJoint* joint, double _min, double _max,
+									double power_pos=10, double damp_pos=0.05, double integration_pos=2,
+									double maxVel=20, double jointLimit=1.3, bool minmaxCheck=true );
+
+			virtual ~OneAxisServoPosForce();
+
+			virtual void init(Primitive* own, Joint* joint = 0) override
+			{
+				if(joint)
+				{
+					assert( joint==this->joint );
+				}// we cannot attach the servo to a new joint
+			}
+
+			// --- Parameters ---
+			virtual void setMinMax(double _min, double _max){
+			  min=_min;
+			  max=_max;
+			  joint->setParam(dParamLoStop, min  - abs(min) * (jointLimit-1));
+			  joint->setParam(dParamHiStop, max  + abs(max) * (jointLimit-1));
+			}
+
+			/** adjusts the power of the servo*/
+			virtual void setPower(double power){
+			  pid.KP = power;
+			};
+			virtual double getPower() override{
+			  return pid.KP;
+			};
+			virtual void setDamping(double damp) override{
+			  pid.KD = damp;
+			};
+			virtual double getDamping() override{
+			  return pid.KD;
+			}
+			virtual void setIntegration(double integration) override{
+			  pid.KI = integration;
+			};
+			virtual double& offsetCanceling() override{
+			  return pid.KI;
+			};
+			virtual void setMaxVel(double maxVel) override{
+				maxPower = maxVel;
+			};
+			virtual double getMaxVel() override{
+				return maxPower;
+			};
+
+			virtual void set(double pos) override ;
+			virtual double get() const override
+			{
+				double pos =  joint->getPosition1();
+				return 2*(pos-min)/(max-min) - 1;
+			}
+			protected:
+				AngularMotor1Axis motor;
+				PID pid;
+				double maxPower;
+	};
 
 }
 #endif
