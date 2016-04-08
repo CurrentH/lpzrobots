@@ -53,7 +53,7 @@ namespace lpzrobots {
                     (Dimensions select components of this vector) */
                 OnlyZAxis,
                 ZProjection, ///< z-component of each axis (Dimension select components of this vector)
-                Axis ///< for each dimension one orienation vector, i.e. for X | Y | Z it is a 3x3 rotation matrix
+                Axis ///< for each dimension one orientation vector, i.e. for X | Y | Z it is a 3x3 rotation matrix
     };
 
     /**

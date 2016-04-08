@@ -163,7 +163,7 @@ namespace lpzrobots {
 		maxPower(_maxPower)
 	{
 		motor.init(0,0);
-		motor.setPower(10000); // This should just be high! (but should we make a var for this?)
+		motor.setPower(_maxPower); // This should just be high! (but should we make a var for this?)
 	}
 
 	OneAxisServoPosForce::~OneAxisServoPosForce(){}
@@ -176,9 +176,7 @@ namespace lpzrobots {
 		pid.setTargetPosition( position );
 		double force = pid.stepPositionForce( joint->getPosition1(), joint->odeHandle.getTime() );
 
-		//std::cout << force << std::endl;
-
-		joint->addForce1( force );
+		motor.set(0, force);
 	}
 
 }

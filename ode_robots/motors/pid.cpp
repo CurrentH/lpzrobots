@@ -173,6 +173,8 @@ namespace lpzrobots {
   }
   double PID::stepPositionForce ( double newsensorval, double time)
   {
+	  int limits = 5;
+
 	  if(lasttime != -1 && time - lasttime > 0 )
 	  {
 		lastposition = position;
@@ -182,8 +184,8 @@ namespace lpzrobots {
 		error = targetposition - position;
 		derivative = (error - lasterror) / stepsize;
 		integrator += stepsize * error;
-
-		int limits = 2000;
+/*
+		int limits = 10;
 
 		if( integrator > limits )
 		{
@@ -193,19 +195,33 @@ namespace lpzrobots {
 		{
 			integrator = -limits;
 		}
-
+*/
 		force = (error*KP) + (derivative*KD) + (integrator*KI);
 
-		limits = 2000;
-
-	    if( force > limits )
-	    	force = limits;
-	    else if( force < -limits )
-	    	force = -limits;
-
-	  } else
+		if( force > limits )
+		{
+			force = limits;
+		}
+		else if( force < -limits )
+		{
+			force = -limits;
+		}
+	  }
+	  else
 	  {
-		force=0;
+		lastposition = position;
+		position = newsensorval;
+		error = targetposition - position;
+		force = (error*KP);
+
+		if( force > limits )
+		{
+			force = limits;
+		}
+		else if( force < -limits )
+		{
+			force = -limits;
+		}
 	  }
 
 	  lasttime=time;
