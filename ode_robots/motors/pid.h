@@ -42,9 +42,11 @@ namespace lpzrobots {
 	double targetposition;
 	double integrator;
 	double derivative;
+
 	double position;
 	double lastposition;
 	double last2position;
+
 	double error;
 	double lasterror;
 

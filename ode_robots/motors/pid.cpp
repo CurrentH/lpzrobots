@@ -34,14 +34,16 @@ namespace lpzrobots {
     {
 		P=D=I=0;
 
-		targetposition = 0;
-		integrator = 0;
-		derivative = 0;
-		position = 0;
-		lastposition = 0;
-		last2position = 0;
-		error = 0;
-		lasterror = 0;
+		targetposition 	= 0;
+		integrator 		= 0;
+		derivative 		= 0;
+
+		position 		= 0;
+		lastposition 	= 0;
+		last2position 	= 0;
+
+		error 			= 0;
+		lasterror 		= 0;
 
 		tau            = 1000;
 		lasttime       = -1;
