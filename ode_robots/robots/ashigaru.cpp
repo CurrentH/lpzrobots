@@ -727,8 +727,8 @@ namespace lpzrobots {
          //Debug
                 OneAxisServo* servo1;
                 if(i == conf.specialParam.conectedLegNum){
-                        servo1 = new OneAxisServoVel(odeHandle, TCj, conf.servoParam.TC_angle_MIN, conf.servoParam.TC_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
-                }else servo1 = new OneAxisServoVel(odeHandle, TCj, conf.servoParam.TC_angle_MIN, conf.servoParam.TC_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                        servo1 = new OneAxisServoVelocityControlled(odeHandle, TCj, conf.servoParam.TC_angle_MIN, conf.servoParam.TC_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                }else servo1 = new OneAxisServoVelocityControlled(odeHandle, TCj, conf.servoParam.TC_angle_MIN, conf.servoParam.TC_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
 
                  // save it to leg struct
                 legs[leg].tcJoint = TCj;
@@ -783,8 +783,8 @@ namespace lpzrobots {
                 //Debug
                 OneAxisServo* servo2;
                 if( i == conf.specialParam.conectedLegNum){
-                        servo2 = new OneAxisServoVel(odeHandle, CTj, conf.servoParam.CT_angle_MIN, conf.servoParam.CT_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
-                }else servo2 = new OneAxisServoVel(odeHandle, CTj, conf.servoParam.CT_angle_MIN, conf.servoParam.CT_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                        servo2 = new OneAxisServoVelocityControlled(odeHandle, CTj, conf.servoParam.CT_angle_MIN, conf.servoParam.CT_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                }else servo2 = new OneAxisServoVelocityControlled(odeHandle, CTj, conf.servoParam.CT_angle_MIN, conf.servoParam.CT_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
 
                  // save it to leg struct
                 legs[leg].ctJoint = CTj;
@@ -855,8 +855,8 @@ namespace lpzrobots {
                 //Debug
                 OneAxisServo* servo3;
                 if(i == conf.specialParam.conectedLegNum){
-                        servo3 = new OneAxisServoVel(odeHandle, FTj, conf.servoParam.FT_angle_MIN, conf.servoParam.FT_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
-                }else servo3 = new OneAxisServoVel(odeHandle, FTj, conf.servoParam.FT_angle_MIN, conf.servoParam.FT_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                        servo3 = new OneAxisServoVelocityControlled(odeHandle, FTj, conf.servoParam.FT_angle_MIN, conf.servoParam.FT_angle_MAX, conf.specialParam.servoPower, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
+                }else servo3 = new OneAxisServoVelocityControlled(odeHandle, FTj, conf.servoParam.FT_angle_MIN, conf.servoParam.FT_angle_MAX, conf.servoParam.power, conf.servoParam.damp, conf.servoParam.maxVel, 1.0);
 
                  // save it to leg struct
                 legs[leg].ftJoint = FTj;

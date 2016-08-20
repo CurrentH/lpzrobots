@@ -75,42 +75,27 @@ namespace lpzrobots {
    */
   double PID::step ( double newsensorval, double time)
   {
-    if(lasttime != -1 && time - lasttime > 0 ){
+   if(lasttime != -1 && time - lasttime > 0 ){
+	  lastposition = position;
+	  position = newsensorval;
+	  double stepsize=time-lasttime;
 
-    	lastposition = position;
-    	position = newsensorval;
-    	double stepsize=time-lasttime;
+	  lasterror = error;
+	  error = targetposition - position;
+	  derivative = (lasterror - error) / stepsize;
 
-		error = targetposition - position;
-		derivative = (error - lasterror) / stepsize;
-		integrator += stepsize * error;
-
-		if( integrator > 10 )
-		{
-			integrator = 10;
-		}
-		else if( integrator < -10 )
-		{
-			integrator = -10;
-		}
-
-		force = (error*KP) + (derivative*KD) + (integrator*KI);
-
-		/*int limits = 10;
-
-	    if( force > limits )
-	    	force = limits;
-	    else if( force < -limits )
-	    	force = -limits;*/
-
-    } else
-    {
-    	force=0;
-    }
-
-    lasttime=time;
-    lasterror = error;
-    return force;
+	  P = error;
+	  //      I += (1/tau) * (error * KI - I); // I+=error * KI
+	  I += stepsize * error * KI;
+	  I = min(0.5,max(-0.5,I)); // limit I to 0.5
+	  D = -derivative * KD;
+	  D = min(0.9,max(-0.9,D)); // limit D to 0.9
+	  force = KP*(P + I + D);
+	} else {
+	  force=0;
+	}
+	lasttime=time;
+	return force;
   }
 
   // This is the new implementation used by the center and velocity servos

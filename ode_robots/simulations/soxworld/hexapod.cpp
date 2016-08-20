@@ -645,7 +645,7 @@ namespace lpzrobots {
           k->init(odeHandle, osgHandleJ, true, rad1 * 2.1);
           // servo used as a spring
           //          spring2 = new HingeServo(k, -1, 1, 1, 0.01,0); // parameters are set later
-          spring2 = new OneAxisServoVel(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
+          spring2 = new OneAxisServoVelocityControlled(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
           tarsussprings.push_back(spring2);
           joints.push_back(k);
 

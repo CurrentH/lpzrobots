@@ -614,7 +614,7 @@ namespace lpzrobots {
       k->init(odeHandle, osgHandleJoint, true, conf.width * 1.05);
       joints.push_back(k);
       // parameters are set later
-      OneAxisServo* servo = new OneAxisServoVel(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
+      OneAxisServo* servo = new OneAxisServoVelocityControlled(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
       servos[BJ_m] = servo;
       backboneServo = servo;
 
@@ -928,7 +928,7 @@ namespace lpzrobots {
         // create motor, overwrite the jointLimit argument with 1.0
         // because it is less obscure and setMinMax makes mistakes
         // otherwise. Parameters are set later
-        OneAxisServo * servo1 = new OneAxisServoVel(odeHandle, j, -1, 1, 1, 0.01, 0, 1.0);
+        OneAxisServo * servo1 = new OneAxisServoVelocityControlled(odeHandle, j, -1, 1, 1, 0.01, 0, 1.0);
         //PUSH THIS STUFF BACK INTO STH!!!! not hipservos obviously
         legs[leg].tcServo = servo1;
         servos[getMotorName(leg, TC)] = servo1;
@@ -949,7 +949,7 @@ namespace lpzrobots {
 
         joints.push_back(k);
         /** parameters are set later */
-        OneAxisServo * servo2 = new OneAxisServoVel(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
+        OneAxisServo * servo2 = new OneAxisServoVelocityControlled(odeHandle, k, -1, 1, 1, 0.01, 0, 1.0);
         //PUSH THIS STUFF BACK INTO STH!!!! not hipservos obviously
         legs[leg].ctrServo = servo2;
         servos[getMotorName(leg, CTR)] = servo2;
@@ -1002,7 +1002,7 @@ namespace lpzrobots {
         joints.push_back(l);
         // servo used as a spring
         /** parameters are set later */
-        OneAxisServo * servo3 = new OneAxisServoVel(odeHandle, l, -1, 1, 1, 0.01, 0, 1.0);
+        OneAxisServo * servo3 = new OneAxisServoVelocityControlled(odeHandle, l, -1, 1, 1, 0.01, 0, 1.0);
         legs[leg].ftiServo = servo3;
         servos[getMotorName(leg, FTI)] = servo3;
 
@@ -1153,7 +1153,7 @@ namespace lpzrobots {
 							 Axis(i%2==0 ? -1 : 1,0,0) * m7);
 					 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
 					 // servo used as a spring
-					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
+					 auto servo = std::make_shared<OneAxisServoVelocityControlled>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
 					 joints.push_back(k);
 					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
 					 tarsussprings.push_back(servo);
@@ -1167,7 +1167,7 @@ namespace lpzrobots {
 							 Axis(i%2==0 ? -1 : 1,0,0) * m7);
 					 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
 					 // servo used as a spring
-					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
+					 auto servo = std::make_shared<OneAxisServoVelocityControlled>(odeHandle,k, -1, 1, 1, 0.05); // parameters are set later
 					 joints.push_back(k);
 					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
 					 tarsussprings.push_back(servo);
@@ -1182,7 +1182,7 @@ namespace lpzrobots {
         					 Axis(i%2==0 ? -1 : 1,0,0) * m7);
         			 k->init(odeHandle, osgHTarsus, true, lengthS/16 * 2.1);
         			 // servo used as a spring
-					 auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
+					 auto servo = std::make_shared<OneAxisServoVelocityControlled>(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
 					 joints.push_back(k);
 					 auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
 					 tarsussprings.push_back(servo);

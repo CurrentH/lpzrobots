@@ -282,7 +282,7 @@ namespace lpzrobots {
         joints[i]->setParam(dParamLoStop, (i%2==0? -2.97:-2.094));    //converted to fractions of 2pi
 
         //adding servos to the joints
-        hingeServos[i] = new OneAxisServoVel(odeHandle, joints[i],(i%2==0? -2.97:-2.094),(i%2==0? 2.97:2.094),
+        hingeServos[i] = new OneAxisServoVelocityControlled(odeHandle, joints[i],(i%2==0? -2.97:-2.094),(i%2==0? 2.97:2.094),
                             getPower(i), 0.2 , 2 , getVelocity(i));
 
     }

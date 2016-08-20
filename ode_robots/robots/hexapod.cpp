@@ -530,7 +530,7 @@ namespace lpzrobots {
                                          Axis(n%2==0 ? -1 : 1,0,0) * m2);
           k->init(odeHandle, osgHandleJ, true, rad2 * 2.1);
           // servo used as a spring
-          auto servo = std::make_shared<OneAxisServoVel>(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
+          auto servo = std::make_shared<OneAxisServoVelocityControlled>(odeHandle,k, -1, 1, 1, 0.01); // parameters are set later
           joints.push_back(k);
           auto spring = std::make_shared<ConstantMotor>(servo, 0.0);
           tarsussprings.push_back(servo);

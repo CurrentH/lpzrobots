@@ -55,13 +55,13 @@ namespace lpzrobots {
     pid.setTargetPosition(pos);
 
     double force = pid.step(joint->getPosition1(), joint->odeHandle.getTime());
-    //force = std::min(pid.KP, std::max(-pid.KP,force));// limit force to 1*KP
-    //force = clip(force,-10*pid.KP, 10*pid.KP); // limit force to 10*KP
+    force = std::min(pid.KP, std::max(-pid.KP,force));// limit force to 1*KP
+    force = clip(force,-10*pid.KP, 10*pid.KP); // limit force to 10*KP
     joint->addForce1(force);
-    /*if(maxVel>0){
+    if(maxVel>0){
       joint->getPart1()->limitLinearVel(maxVel);
       joint->getPart2()->limitLinearVel(maxVel);
-    }*/
+    }
   }
 
   OneAxisServoCentered::OneAxisServoCentered(OneAxisJoint* joint, double _min, double _max,
@@ -85,8 +85,48 @@ namespace lpzrobots {
     }
   }
 
-
   OneAxisServoVel::OneAxisServoVel(const OdeHandle& odeHandle,
+                                     OneAxisJoint* joint, double _min, double _max,
+                                     double power, double damp, double maxVel,
+                                     double jointLimit)
+      : OneAxisServo(joint, _min, _max, maxVel/2, 0, 0, 0, jointLimit, false),
+        // don't wonder! It is correct to give maxVel as a power parameter to the parent.
+        motor(odeHandle, joint, power), power(power), damp(clip(damp,0.0,1.0))
+    {
+      dummy=0;
+      motor.init(0,0);
+    }
+
+    OneAxisServoVel::~OneAxisServoVel(){}
+
+    void OneAxisServoVel::setPower(double _power) {
+      power=_power;
+      motor.setPower(power);
+    };
+
+    void OneAxisServoVel::set(double pos){
+      pos = clip(pos, -1.0, 1.0);
+      pos = (pos+1)*(max-min)/2 + min;
+      pid.setTargetPosition(pos);
+      double vel = pid.stepVelocity(joint->getPosition1(), joint->odeHandle.getTime());
+      double e   = fabs(2.0*(pid.error)/(max-min)); // distance from set point
+      motor.set(0, vel);
+      // calculate power of servo depending on the damping and distance from set point and
+      // sigmoid ramping of power for damping < 1
+      //      motor.setPower(((1.0-damp)*tanh(e)+damp) * power);
+      motor.setPower(tanh(e+damp) * power);
+
+      /*if(maxVel >0 ){ // we limit the maximal velocity (like a air-friction)
+      // this hinders the simulation from disintegrating.
+      // Not required for velocity servos
+      joint->getPart1()->limitLinearVel(5*maxVel);
+      joint->getPart2()->limitLinearVel(5*maxVel);
+      }
+      */
+    }
+
+
+  OneAxisServoVelocityControlled::OneAxisServoVelocityControlled(const OdeHandle& odeHandle,
                                    OneAxisJoint* joint, double _min, double _max,
                                    double power, double damp, double _maxPower,
                                    double jointLimit)
@@ -98,14 +138,14 @@ namespace lpzrobots {
     motor.init(0,0);
   }
 
-  OneAxisServoVel::~OneAxisServoVel(){}
+  OneAxisServoVelocityControlled::~OneAxisServoVelocityControlled(){}
 
-  void OneAxisServoVel::setPower(double _power) {
+  void OneAxisServoVelocityControlled::setPower(double _power) {
     power=_power;
     motor.setPower(power);
   };
 
-  void OneAxisServoVel::set(double velocity){
+  void OneAxisServoVelocityControlled::set(double velocity){
 	velocity = clip(velocity, -1.0, 1.0);
 
     // A function that scales the input to fit the maxPower
