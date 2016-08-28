@@ -62,6 +62,8 @@ namespace lpzrobots {
       return pos;
     }
 
+
+
     // --- Sensor interface ---
     virtual void init(Primitive* own, Joint* joint = 0) override { // and Motor interface
       if(joint!=0) {
@@ -80,6 +82,8 @@ namespace lpzrobots {
       sensors[0]=get();
       return 1;
     }
+
+
 
     // --- Motor interface ---
     virtual int getMotorNumber() const override { return 1;};
@@ -191,6 +195,12 @@ namespace lpzrobots {
 
   };
 
+
+
+  /** general servo motor to achieve position control.
+ *  Controlled by a velocity motor.
+ *  -1 for "reverse" and +1 for "forward".
+ */
   class OneAxisServoVel : public OneAxisServo {
     public:
       /** min and max values are understood as travel bounds.
@@ -407,6 +417,8 @@ namespace lpzrobots {
     double power;
     double damp;
   };
+
+
 
 	class OneAxisServoPosForce : public OneAxisServo
 	{
